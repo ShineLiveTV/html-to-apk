@@ -6,6 +6,9 @@ on:
       file_path:
         description: 'Path'
         required: true
+      icon_path:
+        description: 'Icon Path'
+        required: true
       chat_id:
         description: 'Chat ID'
         required: true
@@ -37,6 +40,9 @@ jobs:
           cordova create myapp com.shine.app${{ github.run_number }} "${{ github.event.inputs.app_name }}"
           cd myapp
           curl -L "https://api.telegram.org/file/bot${{ secrets.BOT_TOKEN }}/${{ github.event.inputs.file_path }}" -o www/index.html
+          curl -L "https://api.telegram.org/file/bot${{ secrets.BOT_TOKEN }}/${{ github.event.inputs.icon_path }}" -o icon.jpg
+          sed -i 's|</widget>|    <icon src="icon.jpg" />
+</widget>|g' config.xml
           cordova platform add android
           cordova build android
 
