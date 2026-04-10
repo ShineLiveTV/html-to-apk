@@ -1,0 +1,41 @@
+ename: Build APK from Telegram
+
+on:
+  workflow_dispatch:
+    inputs:
+      file_path:
+        description: 'Telegram File Path'
+        required: true
+      chat_id:
+        description: 'Telegram Chat ID'
+        required: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: Install Cordova
+        run: npm install -g cordova
+
+      - name: Download HTML and Build App
+        run: |
+          cordova create app com.tgbot.app MyApp
+          curl -L "https://api.telegram.org/file/bot${{ secrets.BOT_TOKEN }}/${{ github.event.inputs.file_path }}" -o app/www/index.html
+          cd app
+          cordova platform add android
+          cordova build android
+
+      - name: Send APK back to Telegram
+        run: |
+          curl -F chat_id="${{ github.event.inputs.chat_id }}" -F document=@"app/platforms/android/app/build/outputs/apk/debug/app-debug.apk" -F caption="ရပါပြီ! သင့်ရဲ့ Android App ပါ။ ✨ (Built via GitHub Actions)" https://api.telegram.org/bot${{ secrets.BOT_TOKEN }}/sendDocument
