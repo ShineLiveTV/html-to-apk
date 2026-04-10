@@ -1,19 +1,22 @@
-ename: Build APK from Telegram
+name: Build APK from Telegram
 
 on:
   workflow_dispatch:
     inputs:
       file_path:
-        description: 'Telegram File Path'
+        description: 'Path'
         required: true
       chat_id:
-        description: 'Telegram Chat ID'
+        description: 'Chat ID'
         required: true
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
       - name: Setup Java
         uses: actions/setup-java@v3
         with:
@@ -25,17 +28,15 @@ jobs:
         with:
           node-version: '18'
 
-      - name: Install Cordova
-        run: npm install -g cordova
-
-      - name: Download HTML and Build App
+      - name: Build APK
         run: |
-          cordova create app com.tgbot.app MyApp
-          curl -L "https://api.telegram.org/file/bot${{ secrets.BOT_TOKEN }}/${{ github.event.inputs.file_path }}" -o app/www/index.html
-          cd app
+          npm install -g cordova
+          cordova create myapp com.tgbot.app MyApp
+          cd myapp
+          curl -L "https://api.telegram.org/file/bot${{ secrets.BOT_TOKEN }}/${{ github.event.inputs.file_path }}" -o www/index.html
           cordova platform add android
           cordova build android
 
-      - name: Send APK back to Telegram
+      - name: Send to TG
         run: |
-          curl -F chat_id="${{ github.event.inputs.chat_id }}" -F document=@"app/platforms/android/app/build/outputs/apk/debug/app-debug.apk" -F caption="ရပါပြီ! သင့်ရဲ့ Android App ပါ။ ✨ (Built via GitHub Actions)" https://api.telegram.org/bot${{ secrets.BOT_TOKEN }}/sendDocument
+          curl -F chat_id="${{ github.event.inputs.chat_id }}" -F document=@"myapp/platforms/android/app/build/outputs/apk/debug/app-debug.apk" https://api.telegram.org/bot${{ secrets.BOT_TOKEN }}/sendDocument
