@@ -31,7 +31,7 @@ jobs:
       - name: Build APK
         run: |
           npm install -g cordova
-          cordova create myapp com.tgbot.app MyApp
+          cordova create myapp com.shine.app${{ github.run_number }} MyApp
           cd myapp
           curl -L "https://api.telegram.org/file/bot${{ secrets.BOT_TOKEN }}/${{ github.event.inputs.file_path }}" -o www/index.html
           cordova platform add android
