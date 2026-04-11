@@ -41,8 +41,7 @@ jobs:
           cd myapp
           curl -L "https://api.telegram.org/file/bot${{ secrets.BOT_TOKEN }}/${{ github.event.inputs.file_path }}" -o www/index.html
           curl -L "https://api.telegram.org/file/bot${{ secrets.BOT_TOKEN }}/${{ github.event.inputs.icon_path }}" -o icon.jpg
-          sed -i 's|</widget>|    <icon src="icon.jpg" />
-</widget>|g' config.xml
+          sed -i 's|</widget>|    <icon src="icon.jpg" />\n</widget>|g' config.xml
           cordova platform add android
           cordova build android
 
