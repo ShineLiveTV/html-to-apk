@@ -41,7 +41,15 @@ jobs:
           cd myapp
           curl -L "https://api.telegram.org/file/bot${{ secrets.BOT_TOKEN }}/${{ github.event.inputs.file_path }}" -o www/index.html
           curl -L "https://api.telegram.org/file/bot${{ secrets.BOT_TOKEN }}/${{ github.event.inputs.icon_path }}" -o icon.jpg
-          sed -i 's|</widget>|    <icon src="icon.jpg" />\n</widget>|g' config.xml
+          
+          # Add Icon and Splash Screen settings
+          cordova plugin add cordova-plugin-splashscreen
+          sed -i 's|</widget>|    <icon src="icon.jpg" />
+    <preference name="SplashScreenDelay" value="3000" />
+    <preference name="FadeSplashScreenDuration" value="1000"/>
+    <preference name="SplashMaintainAspectRatio" value="true" />
+</widget>|g' config.xml
+          
           cordova platform add android
           cordova build android
 
