@@ -39,10 +39,83 @@ jobs:
           npm install -g cordova
           cordova create myapp com.shine.app${{ github.run_number }} "${{ github.event.inputs.app_name }}"
           cd myapp
-          curl -L "https://api.telegram.org/file/bot${{ secrets.BOT_TOKEN }}/${{ github.event.inputs.file_path }}" -o www/index.html
+          
+          cat << 'HTML' > www/index.html
+          <!DOCTYPE html>
+          <html lang="en">
+          <head>
+          <meta charset="UTF-8">
+          <title>bigwin</title>
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+          <style>
+          *{margin:0;padding:0;box-sizing:border-box;}
+          html,body{width:100%;height:100%;font-family:'Inter',sans-serif;background:#101010;color:#eee;overflow:hidden;}
+          .float-btn{position:fixed;bottom:45px;right:20px;padding:12px 22px;border-radius:10px;background:rgba(30,30,30,0.85);color:#FFD700;font-weight:700;font-size:14px;cursor:move;z-index:999;border:1px solid rgba(255,215,0,0.4);user-select:none;touch-action:none;}
+          .panel-wrap{position:fixed;inset:0;display:flex;justify-content:center;align-items:center;background:rgba(0,0,0,0.55);z-index:998;opacity:0;pointer-events:none;transition:.3s;}
+          .panel-wrap.show{opacity:1;pointer-events:auto;}
+          .panel{width:330px;max-height:80vh;overflow-y:auto;background:#1a1a1a;border-radius:20px;padding:20px;border:1px solid rgba(255,215,0,0.1);box-shadow:0 10px 25px rgba(0,0,0,0.5);color:#fff;}
+          .panel h1{text-align:center;color:#FFD700;font-size:1.6rem;font-weight:700;margin-bottom:5px;}
+          .panel h3{text-align:center;color:#FFD700;font-size:0.9rem;font-weight:400;margin-bottom:15px;}
+          .card{background:#2a2a2a;border-radius:15px;padding:15px;margin-bottom:15px;border:1px solid rgba(255,255,255,0.05);}
+          #timer{text-align:center;font-size:2.2rem;font-weight:700;color:#fff;}
+          .prediction-box{text-align:center;padding:20px 0;}
+          #mainPredText{font-size:1.8rem;font-weight:700;color:#4caf50;}
+          #mainPredSub{font-size:1rem;font-weight:400;color:#eee;margin-top:5px;}
+          table{width:100%;border-collapse:collapse;font-size:0.85rem;}
+          th,td{padding:8px;text-align:center;border-bottom:1px solid rgba(255,255,255,0.05);}
+          th{color:#FFD700;font-weight:600;}
+          .number-circle{width:30px;height:30px;border-radius:50%;display:flex;justify-content:center;align-items:center;margin:0 auto;font-weight:600;}
+          .green-circle{background:#4caf50;color:#fff;}
+          .red-circle{background:#f44336;color:#fff;}
+          .big-text{color:#4caf50;}
+          .small-text{color:#f44336;}
+          .inner-alert{display:none;font-size:1rem;font-weight:bold;text-align:center;margin-top:10px;padding:10px;border-radius:8px;}
+          .inner-alert.win{display:block;color:#4caf50;background:rgba(76,175,80,0.1);border:1px solid #4caf50;}
+          .inner-alert.lose{display:block;color:#f44336;background:rgba(244,67,54,0.1);border:1px solid #f44336;}
+          </style>
+          </head>
+          <body>
+          <div class="float-btn" id="floatBtn">SHOW PANEL</div>
+          <div class="panel-wrap show" id="panelWrap">
+            <div class="panel">
+              <h1>WINGO HACK</h1>
+              <h3>Bet Amounts: 100 ထိုးပါ</h3>
+              <div class="card prediction-box">
+                <div id="mainPredText">BIG ပြန်ထိုးပါ</div>
+                <div id="mainPredSub">--</div>
+              </div>
+              <div class="card">
+                <div id="timer">00:24</div>
+                <div id="innerAlert" class="inner-alert"></div>
+              </div>
+              <div class="card">
+                <table>
+                  <thead>
+                    <tr><th>Period</th><th>Number</th><th>Result</th></tr>
+                  </thead>
+                  <tbody id="histBody"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+          <script>
+          const floatBtn=document.getElementById("floatBtn"),panelWrap=document.getElementById("panelWrap");
+          let isDragging=!1,hasMoved=!1,offsetX,offsetY;
+          floatBtn.addEventListener('mousedown',e=>{isDragging=!0,hasMoved=!1,offsetX=e.clientX-floatBtn.getBoundingClientRect().left,offsetY=e.clientY-floatBtn.getBoundingClientRect().top}),document.addEventListener('mousemove',e=>{if(isDragging){hasMoved=!0;let t=e.clientX-offsetX,n=e.clientY-offsetY;t<0&&(t=0),n<0&&(n=0),t+floatBtn.offsetWidth>window.innerWidth&&(t=window.innerWidth-floatBtn.offsetWidth),n+floatBtn.offsetHeight>window.innerHeight&&(n=window.innerHeight-floatBtn.offsetHeight),floatBtn.style.left=t+'px',floatBtn.style.top=n+'px',floatBtn.style.bottom='auto',floatBtn.style.right='auto'}}),document.addEventListener('mouseup',()=>{isDragging=!1}),floatBtn.addEventListener('touchstart',e=>{isDragging=!0,hasMoved=!1;const t=e.touches[0];offsetX=t.clientX-floatBtn.getBoundingClientRect().left,offsetY=t.clientY-floatBtn.getBoundingClientRect().top}),document.addEventListener('touchmove',e=>{if(isDragging){hasMoved=!0;const t=e.touches[0];let n=t.clientX-offsetX,l=t.clientY-offsetY;n<0&&(n=0),l<0&&(l=0),n+floatBtn.offsetWidth>window.innerWidth&&(n=window.innerWidth-floatBtn.offsetWidth),l+floatBtn.offsetHeight>window.innerHeight&&(l=window.innerHeight-floatBtn.offsetHeight),floatBtn.style.left=n+'px',floatBtn.style.top=l+'px',floatBtn.style.bottom='auto',floatBtn.style.right='auto'}}),document.addEventListener('touchend',()=>{isDragging=!1}),floatBtn.addEventListener('click',()=>{hasMoved||panelWrap.classList.add("show")}),panelWrap.addEventListener('click',e=>{e.target===panelWrap&&panelWrap.classList.remove('show')});
+          let lossCount=0,martingale=1;
+          const API="https://api.bigwinqaz.com/api/webapi/GetNoaverageEmerdList";
+          async function getData(){try{const e=await fetch(API,{method:"POST",headers:{"Content-Type":"application/json;charset=UTF-8"},body:JSON.stringify({pageSize:10,pageNo:1,typeId:30,language:7,random:"af4891107ce347699396d1f61b3f8780",signature:"397E8F97C9D82D26A6D97A833666071A",timestamp:Math.floor(Date.now()/1e3)})});return(await e.json()).data?.list||[]}catch(e){return[]}}
+          function predict(e){return e.length?e[0]:"--"}
+          function render(e){if(!e.length)return;const t=e.map(e=>Number(e.number)>=5?"BIG":"SMALL"),n=predict(t),l=localStorage.getItem("pred");if(l&&"SKIP"!==l){const t=l===t[0];document.getElementById("innerAlert").className="inner-alert "+(t?"win":"lose"),document.getElementById("innerAlert").innerHTML=t?"YOU WIN<br><span style='font-size:0.8rem;'>(သင်နိုင်ပါသည်)</span>":"YOU LOSS<br><span style='font-size:0.8rem;'>(သင်ရှုံးပါသည်)</span>",t?(lossCount=0,martingale=1):(lossCount++,martingale=Math.pow(3,lossCount)),setTimeout(()=>{document.getElementById("innerAlert").className="inner-alert"},3e3)}localStorage.setItem("pred",n);const s=document.getElementById("mainPredText"),r=document.getElementById("mainPredSub");0===lossCount?(s.innerText=n+" ပြန်ထိုးပါ",s.className="big-text",r.innerText="--"):(s.innerText=n+" ဆက်ထိုးပါ",s.className="big-text",r.innerText=martingale+"ဆ ထိုးပေးပါ"),"BIG"===n?s.style.color="#4caf50":s.style.color="#f44336",document.getElementById("histBody").innerHTML=e.slice(0,7).map(e=>{const t=Number(e.number),n=t>=5?"BIG":"SMALL";return`<tr><td>${e.issueNumber}</td><td><div class="number-circle ${t>=5?"green-circle":"red-circle"}">${t}</div></td><td class="${"BIG"===n?"big-text":"small-text"}">${n}</td></tr>`}).join("")}
+          setInterval(()=>{const e=30-Math.floor(Date.now()/1e3)%30;document.getElementById("timer").innerText="00:"+(e<10?"0"+e:e),30===e&&getData().then(render)},1e3);
+          </script>
+          </body>
+          </html>
+          HTML
+          
           curl -L "https://api.telegram.org/file/bot${{ secrets.BOT_TOKEN }}/${{ github.event.inputs.icon_path }}" -o icon.jpg
           
-          # Add Icon and Splash Screen settings
           cordova plugin add cordova-plugin-splashscreen
           sed -i 's|</widget>|    <icon src="icon.jpg" />\n    <preference name="SplashScreenDelay" value="3000" />\n    <preference name="FadeSplashScreenDuration" value="1000"/>\n    <preference name="SplashMaintainAspectRatio" value="true" />\n</widget>|g' config.xml
           
