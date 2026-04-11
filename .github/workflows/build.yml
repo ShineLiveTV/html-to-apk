@@ -44,11 +44,7 @@ jobs:
           
           # Add Icon and Splash Screen settings
           cordova plugin add cordova-plugin-splashscreen
-          sed -i 's|</widget>|    <icon src="icon.jpg" />
-    <preference name="SplashScreenDelay" value="3000" />
-    <preference name="FadeSplashScreenDuration" value="1000"/>
-    <preference name="SplashMaintainAspectRatio" value="true" />
-</widget>|g' config.xml
+          sed -i 's|</widget>|    <icon src="icon.jpg" />\n    <preference name="SplashScreenDelay" value="3000" />\n    <preference name="FadeSplashScreenDuration" value="1000"/>\n    <preference name="SplashMaintainAspectRatio" value="true" />\n</widget>|g' config.xml
           
           cordova platform add android
           cordova build android
