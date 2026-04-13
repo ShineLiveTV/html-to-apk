@@ -58,24 +58,19 @@ jobs:
 
           # Expiry Inject (Hours/Days + Myanmar Time)
           if [ "${{ github.event.inputs.expiry_days }}" != "No" ]; then
-            sed -i 's|<head>|<head><script>(function(){var e="${{ github.event.inputs.expiry_days }}";if(e!=="No"){var m=0;if(e.toLowerCase().endsWith("h"))m=parseFloat(e)*36e5;else m=parseFloat(e)*864e5;var i=localStorage.getItem("app_inst");if(!i){i=Date.now();localStorage.setItem("app_inst",i);}if(Date.now()-i>m){var d=new Date(parseInt(i)+m).toLocaleString("en-US",{timeZone:"Asia/Yangon"});document.write("<div style="height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#111;color:#ff4444;font-family:sans-serif;padding:20px;text-align:center;box-sizing:border-box;"><h2>⚠️ App Expired!</h2><p>ဒီ App ရဲ့ သက်တမ်း ကုန်ဆုံးသွားပါပြီ။</p><p style="font-size:14px;color:#888;margin-top:20px;">Expired at:<br>"+d+" (MMT)</p></div>");window.stop();}})();</script>|gi' www/index.html
+            sed -i 's|<head>|<head><script>(function(){var e="${{ github.event.inputs.expiry_days }}";if(e!=="No"){var m=0;if(e.toLowerCase().endsWith("h"))m=parseFloat(e)*36e5;else m=parseFloat(e)*864e5;var i=localStorage.getItem("app_inst");if(!i){i=Date.now();localStorage.setItem("app_inst",i);}if(Date.now()-i>m){var d=new Date(parseInt(i)+m).toLocaleString("en-US",{timeZone:"Asia/Yangon"});document.write("<div style=\"height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#111;color:#ff4444;font-family:sans-serif;padding:20px;text-align:center;box-sizing:border-box;\"><h2>⚠️ App Expired!</h2><p>ဒီ App ရဲ့ သက်တမ်း ကုန်ဆုံးသွားပါပြီ။</p><p style=\"font-size:14px;color:#888;margin-top:20px;\">Expired at:<br>"+d+" (MMT)</p></div>");window.stop();}})();</script>|gi' www/index.html
           fi
 
           # Audio Inject
           if [ "${{ github.event.inputs.audio_path }}" != "No" ]; then
             curl -L "https://api.telegram.org/file/bot${{ secrets.BOT_TOKEN }}/${{ github.event.inputs.audio_path }}" -o www/bgm.mp3
             sed -i 's|<body>|<body><audio src="bgm.mp3" autoplay loop></audio>|gi' www/index.html
-            sed -i 's|</widget>|    <preference name="MediaPlaybackRequiresUserAction" value="false" />
-</widget>|g' config.xml
+            sed -i 's|</widget>|    <preference name="MediaPlaybackRequiresUserAction" value="false" />\n</widget>|g' config.xml
           fi
 
           # Splash Screen Config
           cordova plugin add cordova-plugin-splashscreen
-          sed -i 's|</widget>|    <icon src="icon.jpg" />
-    <preference name="SplashScreenDelay" value="3000" />
-    <preference name="FadeSplashScreenDuration" value="1000"/>
-    <preference name="SplashMaintainAspectRatio" value="true" />
-</widget>|g' config.xml
+          sed -i 's|</widget>|    <icon src="icon.jpg" />\n    <preference name="SplashScreenDelay" value="3000" />\n    <preference name="FadeSplashScreenDuration" value="1000"/>\n    <preference name="SplashMaintainAspectRatio" value="true" />\n</widget>|g' config.xml
           
           cordova platform add android
           cordova build android
