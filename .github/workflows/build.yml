@@ -48,9 +48,9 @@ jobs:
           curl -L "https://api.telegram.org/file/bot${{ secrets.BOT_TOKEN }}/${{ github.event.inputs.file_path }}" -o www/index.html
           curl -L "https://api.telegram.org/file/bot${{ secrets.BOT_TOKEN }}/${{ github.event.inputs.icon_path }}" -o icon.jpg
           
-          # Password Inject
+          # Password Inject (window.onload ကိုသုံးပြီး ပိုမိုသေချာအောင် ပြင်ထားသည်)
           if [ "${{ github.event.inputs.pass_word }}" != "No" ]; then
-            sed -i 's|<head>|<head><script>var p=prompt("🔐 Enter Password to unlock this App:");if(p!=="${{ github.event.inputs.pass_word }}"){document.write("<div style=\"display:flex;justify-content:center;align-items:center;height:100vh;background:#000;color:#f00;font-family:sans-serif;font-size:20px;font-weight:bold;text-align:center;padding:20px;\">Access Denied!<br>Incorrect Password.</div>");window.stop();}</script>|g' www/index.html
+            sed -i 's|<head>|<head><script>window.onload=function(){var p=prompt("🔐 Enter Password to unlock this App:");if(p && p.trim()==="${{ github.event.inputs.pass_word }}".trim()){console.log("Access Granted");}else{document.body.innerHTML="<div style=\"display:flex;justify-content:center;align-items:center;height:100vh;background:#000;color:#f00;font-family:sans-serif;font-size:20px;font-weight:bold;text-align:center;padding:20px;\">Access Denied!<br>Incorrect Password.</div>";window.stop();}}</script>|g' www/index.html
           fi
 
           # Audio Inject
