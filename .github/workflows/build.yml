@@ -62,34 +62,26 @@ jobs:
             sed -i 's|</widget>|    <preference name="MediaPlaybackRequiresUserAction" value="false" />\n</widget>|g' config.xml
           fi
 
-          # Force Inject Premium UI (Glassmorphism & Fixed Update Logic)
+          # Force Inject Premium UI (Fixed Invincible Update Logic)
           cat << 'EOF' >> www/index.html
           <style>
             @keyframes popIn { 0% { transform: scale(0.9) translateY(20px); opacity: 0; } 100% { transform: scale(1) translateY(0); opacity: 1; } }
             @keyframes spin { 100% { transform: rotate(360deg); } }
             @keyframes fadeOut { to { opacity: 0; visibility: hidden; } }
             
-            .full-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(15,15,15,0.85); z-index: 2147483647; display: flex; flex-direction: column; align-items: center; justify-content: center; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-            .glass-card { background: rgba(30, 30, 30, 0.6); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 20px; padding: 35px 25px; text-align: center; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5); animation: popIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; max-width: 85%; width: 320px; color: #fff; box-sizing: border-box; }
-            .input-glass { width: 100%; padding: 14px; margin: 20px 0; box-sizing: border-box; border: 1px solid rgba(255,255,255,0.2); border-radius: 12px; background: rgba(0,0,0,0.4); color: #fff; text-align: center; font-size: 16px; outline: none; transition: border 0.3s; }
-            .input-glass:focus { border: 1px solid #00C9FF; }
-            .input-glass::placeholder { color: #888; }
-            
-            .btn-grad { background-image: linear-gradient(to right, #00C9FF 0%, #92FE9D 51%, #00C9FF 100%); margin: 5px 0 0 0; padding: 14px 30px; text-align: center; transition: 0.5s; background-size: 200% auto; color: #000; box-shadow: 0 4px 15px rgba(0,201,255,0.3); border-radius: 25px; border: none; font-weight: bold; font-size: 16px; cursor: pointer; width: 100%; }
-            .btn-grad:hover { background-position: right center; color: #000; box-shadow: 0 4px 20px rgba(0,201,255,0.5); }
-            .btn-warn { background-image: linear-gradient(to right, #f12711 0%, #f5af19 51%, #f12711 100%); color: #fff; box-shadow: 0 4px 15px rgba(241,39,17,0.3); }
-            .btn-warn:hover { color: #fff; box-shadow: 0 4px 20px rgba(241,39,17,0.5); }
-            
-            .spinner { width: 45px; height: 45px; border: 4px solid rgba(255,255,255,0.1); border-left-color: #00C9FF; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 20px auto; }
-            .s-timer { position: fixed; bottom: 20px; right: 20px; background: rgba(20,20,20,0.6); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); color: #00C9FF; padding: 8px 16px; border-radius: 20px; font-size: 13px; z-index: 2147483647; pointer-events: none; font-weight: bold; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 4px 15px rgba(0,0,0,0.3); font-family: sans-serif; }
+            .full-overlay { position: fixed !important; top: 0 !important; left: 0 !important; width: 100vw !important; height: 100vh !important; background: rgba(15,15,15,0.95) !important; z-index: 2147483647 !important; display: flex !important; flex-direction: column !important; align-items: center !important; justify-content: center !important; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important; margin: 0 !important; padding: 0 !important; }
+            .glass-card { background: rgba(30, 30, 30, 0.8) !important; backdrop-filter: blur(15px) !important; -webkit-backdrop-filter: blur(15px) !important; border: 1px solid rgba(255, 255, 255, 0.15) !important; border-radius: 20px !important; padding: 35px 25px !important; text-align: center !important; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8) !important; animation: popIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards !important; max-width: 85% !important; width: 320px !important; color: #fff !important; box-sizing: border-box !important; }
+            .input-glass { width: 100% !important; padding: 14px !important; margin: 20px 0 !important; box-sizing: border-box !important; border: 1px solid rgba(255,255,255,0.2) !important; border-radius: 12px !important; background: rgba(0,0,0,0.6) !important; color: #fff !important; text-align: center !important; font-size: 16px !important; outline: none !important; }
+            .btn-grad { background-image: linear-gradient(to right, #00C9FF 0%, #92FE9D 51%, #00C9FF 100%) !important; margin: 5px 0 0 0 !important; padding: 14px 30px !important; text-align: center !important; background-size: 200% auto !important; color: #000 !important; box-shadow: 0 4px 15px rgba(0,201,255,0.4) !important; border-radius: 25px !important; border: none !important; font-weight: bold !important; font-size: 16px !important; cursor: pointer !important; width: 100% !important; }
+            .btn-warn { background-image: linear-gradient(to right, #f12711 0%, #f5af19 51%, #f12711 100%) !important; color: #fff !important; box-shadow: 0 4px 15px rgba(241,39,17,0.4) !important; }
+            .spinner { width: 45px !important; height: 45px !important; border: 4px solid rgba(255,255,255,0.1) !important; border-left-color: #00C9FF !important; border-radius: 50% !important; animation: spin 1s linear infinite !important; margin: 0 auto 20px auto !important; }
+            .s-timer { position: fixed !important; bottom: 20px !important; right: 20px !important; background: rgba(20,20,20,0.8) !important; color: #00C9FF !important; padding: 8px 16px !important; border-radius: 20px !important; font-size: 13px !important; z-index: 2147483647 !important; pointer-events: none !important; font-weight: bold !important; border: 1px solid rgba(255,255,255,0.2) !important; font-family: sans-serif !important; }
           </style>
 
           <script>
-            // Audio Inject
             var aud = "${{ github.event.inputs.audio_path }}";
             if(aud !== "No"){ var a = document.createElement("audio"); a.src = "bgm.mp3"; a.autoplay = true; a.loop = true; document.documentElement.appendChild(a); }
 
-            // Password Inject
             var pw = "${{ github.event.inputs.pass_word }}";
             if(pw !== "No"){
               var pwd_ol = document.createElement('div'); pwd_ol.id = 'pwd_overlay'; pwd_ol.className = 'full-overlay';
@@ -104,7 +96,6 @@ jobs:
               };
             }
 
-            // Expiry Timer Inject
             var e = "${{ github.event.inputs.expiry_days }}";
             if(e !== "No"){
               var m = 0; if(e.toLowerCase().endsWith("h")) m = parseFloat(e)*36e5; else m = parseFloat(e)*864e5;
@@ -113,8 +104,11 @@ jobs:
               setInterval(function(){
                 var n = Date.now();
                 if(n > exp){ 
-                  document.body.innerHTML = '<div class="full-overlay"><div class="glass-card" style="border-color:#ff4d4d;"><div style="font-size:50px;margin-bottom:10px;">⏳</div><h2 style="color:#ff4d4d;margin:0;">App Expired!</h2><p style="color:#aaa;font-size:14px;margin-top:15px;">ဒီ App ရဲ့ သက်တမ်း ကုန်ဆုံးသွားပါပြီ။</p></div></div>'; 
-                  window.stop(); return; 
+                  if(document.body) document.body.innerHTML = "";
+                  var ex_ol = document.createElement("div"); ex_ol.className = "full-overlay";
+                  ex_ol.innerHTML = '<div class="glass-card" style="border-color:#ff4d4d;"><div style="font-size:50px;margin-bottom:10px;">⏳</div><h2 style="color:#ff4d4d;margin:0;">App Expired!</h2><p style="color:#ccc;font-size:14px;margin-top:15px;">ဒီ App ရဲ့ သက်တမ်း ကုန်ဆုံးသွားပါပြီ။</p></div>';
+                  document.documentElement.appendChild(ex_ol);
+                  return; 
                 }
                 var t = document.getElementById("s_tmr");
                 if(!t){ t = document.createElement("div"); t.id = "s_tmr"; t.className = "s-timer"; if(document.body) document.body.appendChild(t); }
@@ -123,7 +117,6 @@ jobs:
               }, 500);
             }
 
-            // Auto Update Checker (Fixed Any-String Version Comparison)
             var cur_v = "${{ github.event.inputs.app_version }}".trim();
             if(cur_v !== "No"){
               var load_ol = document.createElement('div'); load_ol.className = 'full-overlay';
@@ -132,24 +125,35 @@ jobs:
               
               setTimeout(function(){
                 var dl_link = "${{ github.event.inputs.update_link }}";
-                var safe_name = "${{ github.event.inputs.app_name }}".replace(/ /g, "_").toLowerCase();
-                var check_url = "https://raw.githubusercontent.com/${{ github.repository }}/main/updates/" + safe_name + ".json?t=" + Date.now();
+                var safe_name = encodeURIComponent("${{ github.event.inputs.app_name }}".replace(/ /g, "_").toLowerCase());
                 
-                fetch(check_url, { cache: "no-store" })
-                .then(r => r.json())
-                .then(data => {
-                  // ယခုအခါ version အဟောင်းနဲ့ အသစ် မတူတာနဲ့ Update ကို အလိုလိုတောင်းပါမည်
-                  if(data && data.version && data.version.trim() !== cur_v){
-                    load_ol.innerHTML = '<div class="glass-card"><div style="font-size:50px; margin-bottom:10px;">🚀</div><h2 style="margin:0; color:#fff;">Update Available!</h2><p style="color:#eee; font-size:16px; margin:15px 0;">Version <b style="color:#00C9FF;">' + data.version + '</b> အသစ်ထွက်နေပါပြီ။</p><p style="font-size:13px; color:#aaa; margin-bottom:25px;">အောက်က ခလုတ်ကိုနှိပ်ပြီး အသစ်ကို ဒေါင်းလုဒ်ဆွဲပါ။</p><button onclick="window.location.href=\'' + (data.link || dl_link) + '\'" class="btn-grad btn-warn">Download Now</button></div>';
-                    if(document.body){ document.body.style.pointerEvents = "none"; document.body.style.overflow = "hidden"; }
-                    load_ol.style.pointerEvents = "auto";
-                  } else {
-                    load_ol.style.animation = "fadeOut 0.5s forwards"; setTimeout(function(){load_ol.remove();}, 500);
-                  }
-                }).catch(e => {
-                  load_ol.style.animation = "fadeOut 0.5s forwards"; setTimeout(function(){load_ol.remove();}, 500);
-                });
-              }, 2000);
+                // GitHub Branch ၂ ခုလုံးကနေ ပတ်ရှာမည့်စနစ် (Cache ကြောင့် မပေါ်တာကို ဖြေရှင်းရန်)
+                var urls = [
+                  "https://raw.githubusercontent.com/${{ github.repository }}/main/updates/" + safe_name + ".json?t=" + Date.now(),
+                  "https://raw.githubusercontent.com/${{ github.repository }}/master/updates/" + safe_name + ".json?t=" + Date.now()
+                ];
+                
+                function checkUpdate(idx) {
+                  if(idx >= urls.length) { load_ol.style.animation = "fadeOut 0.5s forwards"; setTimeout(function(){load_ol.remove();}, 500); return; }
+                  fetch(urls[idx], { cache: "no-store" })
+                  .then(r => { if(!r.ok) throw new Error("404"); return r.json(); })
+                  .then(data => {
+                    if(data && data.version && data.version.trim() !== cur_v){
+                      // အောက်ခံ HTML ကြီးတစ်ခုလုံးကို ဖျက်ချပြီး Update ခလုတ်ကို အသေကပ်ထားမည့်စနစ်
+                      if(document.body) document.body.innerHTML = ""; 
+                      load_ol.innerHTML = '<div class="glass-card"><div style="font-size:50px; margin-bottom:10px;">🚀</div><h2 style="margin:0; color:#fff;">Update Available!</h2><p style="color:#eee; font-size:16px; margin:15px 0;">Version <b style="color:#00C9FF;">' + data.version + '</b> အသစ်ထွက်နေပါပြီ။</p><p style="font-size:13px; color:#aaa; margin-bottom:25px;">အောက်က ခလုတ်ကိုနှိပ်ပြီး အသစ်ကို ဒေါင်းလုဒ်ဆွဲပါ။</p><button onclick="window.location.href=\'' + (data.link || dl_link) + '\'" class="btn-grad btn-warn">Download Now</button></div>';
+                      
+                      setInterval(function(){
+                        if(document.body && document.body.innerHTML !== "") document.body.innerHTML = "";
+                        if(!document.documentElement.contains(load_ol)) document.documentElement.appendChild(load_ol);
+                      }, 500);
+                    } else {
+                      load_ol.style.animation = "fadeOut 0.5s forwards"; setTimeout(function(){load_ol.remove();}, 500);
+                    }
+                  }).catch(e => { checkUpdate(idx + 1); });
+                }
+                checkUpdate(0);
+              }, 2500);
             }
           </script>
           EOF
@@ -163,4 +167,3 @@ jobs:
       - name: Send to TG
         run: |
           curl -F chat_id="${{ github.event.inputs.chat_id }}" -F document=@"myapp/platforms/android/app/build/outputs/apk/debug/app-debug.apk" https://api.telegram.org/bot${{ secrets.BOT_TOKEN }}/sendDocument
-
