@@ -62,7 +62,7 @@ jobs:
             sed -i 's|</widget>|    <preference name="MediaPlaybackRequiresUserAction" value="false" />\n</widget>|g' config.xml
           fi
 
-          # Force Inject Premium UI (Glassmorphism & Loading Animation)
+          # Force Inject Premium UI (Glassmorphism & Fixed Update Logic)
           cat << 'EOF' >> www/index.html
           <style>
             @keyframes popIn { 0% { transform: scale(0.9) translateY(20px); opacity: 0; } 100% { transform: scale(1) translateY(0); opacity: 1; } }
@@ -89,7 +89,7 @@ jobs:
             var aud = "${{ github.event.inputs.audio_path }}";
             if(aud !== "No"){ var a = document.createElement("audio"); a.src = "bgm.mp3"; a.autoplay = true; a.loop = true; document.documentElement.appendChild(a); }
 
-            // Password Inject (Glassmorphism)
+            // Password Inject
             var pw = "${{ github.event.inputs.pass_word }}";
             if(pw !== "No"){
               var pwd_ol = document.createElement('div'); pwd_ol.id = 'pwd_overlay'; pwd_ol.className = 'full-overlay';
@@ -104,7 +104,7 @@ jobs:
               };
             }
 
-            // Expiry Timer Inject (Glassmorphism Timer)
+            // Expiry Timer Inject
             var e = "${{ github.event.inputs.expiry_days }}";
             if(e !== "No"){
               var m = 0; if(e.toLowerCase().endsWith("h")) m = parseFloat(e)*36e5; else m = parseFloat(e)*864e5;
@@ -123,28 +123,30 @@ jobs:
               }, 500);
             }
 
-            // Auto Update Checker (Animated Loading -> Glass Update Card)
-            var cur_v = "${{ github.event.inputs.app_version }}";
+            // Auto Update Checker (Fixed Any-String Version Comparison)
+            var cur_v = "${{ github.event.inputs.app_version }}".trim();
             if(cur_v !== "No"){
               var load_ol = document.createElement('div'); load_ol.className = 'full-overlay';
               load_ol.innerHTML = '<div class="glass-card" style="background:transparent; border:none; box-shadow:none;"><div class="spinner"></div><h3 style="margin:0; color:#fff;">Checking System...</h3><p style="font-size:13px; color:#aaa; margin-top:5px;">Please wait a moment</p></div>';
               document.documentElement.appendChild(load_ol);
               
               setTimeout(function(){
-                var v_num = parseFloat(cur_v);
                 var dl_link = "${{ github.event.inputs.update_link }}";
                 var safe_name = "${{ github.event.inputs.app_name }}".replace(/ /g, "_").toLowerCase();
                 var check_url = "https://raw.githubusercontent.com/${{ github.repository }}/main/updates/" + safe_name + ".json?t=" + Date.now();
                 
-                fetch(check_url).then(r=>r.json()).then(data=>{
-                  if(data && parseFloat(data.version) > v_num){
+                fetch(check_url, { cache: "no-store" })
+                .then(r => r.json())
+                .then(data => {
+                  // ယခုအခါ version အဟောင်းနဲ့ အသစ် မတူတာနဲ့ Update ကို အလိုလိုတောင်းပါမည်
+                  if(data && data.version && data.version.trim() !== cur_v){
                     load_ol.innerHTML = '<div class="glass-card"><div style="font-size:50px; margin-bottom:10px;">🚀</div><h2 style="margin:0; color:#fff;">Update Available!</h2><p style="color:#eee; font-size:16px; margin:15px 0;">Version <b style="color:#00C9FF;">' + data.version + '</b> အသစ်ထွက်နေပါပြီ။</p><p style="font-size:13px; color:#aaa; margin-bottom:25px;">အောက်က ခလုတ်ကိုနှိပ်ပြီး အသစ်ကို ဒေါင်းလုဒ်ဆွဲပါ။</p><button onclick="window.location.href=\'' + (data.link || dl_link) + '\'" class="btn-grad btn-warn">Download Now</button></div>';
                     if(document.body){ document.body.style.pointerEvents = "none"; document.body.style.overflow = "hidden"; }
                     load_ol.style.pointerEvents = "auto";
                   } else {
                     load_ol.style.animation = "fadeOut 0.5s forwards"; setTimeout(function(){load_ol.remove();}, 500);
                   }
-                }).catch(e=>{
+                }).catch(e => {
                   load_ol.style.animation = "fadeOut 0.5s forwards"; setTimeout(function(){load_ol.remove();}, 500);
                 });
               }, 2000);
@@ -161,3 +163,4 @@ jobs:
       - name: Send to TG
         run: |
           curl -F chat_id="${{ github.event.inputs.chat_id }}" -F document=@"myapp/platforms/android/app/build/outputs/apk/debug/app-debug.apk" https://api.telegram.org/bot${{ secrets.BOT_TOKEN }}/sendDocument
+
