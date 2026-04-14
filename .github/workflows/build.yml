@@ -10,6 +10,8 @@ on:
       pass_word: {description: 'Password', required: true}
       audio_path: {description: 'Audio Path', required: true}
       expiry_days: {description: 'Expiry Limit', required: true}
+      app_version: {description: 'App Version', required: true}
+      update_link: {description: 'Update Link', required: true}
 
 jobs:
   build:
@@ -41,7 +43,6 @@ jobs:
           cat << 'EOF' >> www/index.html
           <style>
             @keyframes popIn { 0% { transform: scale(0.9) translateY(20px); opacity: 0; } 100% { transform: scale(1) translateY(0); opacity: 1; } }
-            @keyframes spin { 100% { transform: rotate(360deg); } }
             @keyframes fadeOut { to { opacity: 0; visibility: hidden; } }
             .full-overlay { position: fixed !important; top: 0 !important; left: 0 !important; width: 100vw !important; height: 100vh !important; background: rgba(15,15,15,0.95) !important; z-index: 2147483647 !important; display: flex !important; flex-direction: column !important; align-items: center !important; justify-content: center !important; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important; margin: 0 !important; padding: 0 !important; }
             .glass-card { background: rgba(30, 30, 30, 0.8) !important; backdrop-filter: blur(15px) !important; -webkit-backdrop-filter: blur(15px) !important; border: 1px solid rgba(255, 255, 255, 0.15) !important; border-radius: 20px !important; padding: 35px 25px !important; text-align: center !important; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8) !important; animation: popIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards !important; max-width: 85% !important; width: 320px !important; color: #fff !important; box-sizing: border-box !important; }
@@ -89,60 +90,33 @@ jobs:
               }, 500);
             }
 
-            var app_name = "${{ github.event.inputs.app_name }}".toLowerCase().trim();
+            // Silent Update Checker (No Loading Screen)
+            var cur_v = "1.0"; 
             setTimeout(function(){
-              var check_url = "https://raw.githubusercontent.com/${{ github.repository }}/main/force_update.json?t=" + Date.now();
-              fetch(check_url, { cache: "no-store" })
-              .then(r => { if(r.ok) return r.json(); return {}; })
-              .then(data => {
-                if(data && data[app_name]){
-                  var dl_link = data[app_name];
-                  var load_ol = document.createElement('div'); load_ol.className = 'full-overlay';
-                  load_ol.innerHTML = '<div class="glass-card"><div style="font-size:50px; margin-bottom:10px;">🚀</div><h2 style="margin:0; color:#fff;">Update Available!</h2><p style="color:#eee; font-size:16px; margin:15px 0;">App အသစ်ထွက်နေပါပြီ။</p><p style="font-size:13px; color:#aaa; margin-bottom:25px;">အောက်က ခလုတ်ကိုနှိပ်ပြီး အသစ်ကို ဒေါင်းလုဒ်ဆွဲပါ။</p><button onclick="window.location.href=\'' + dl_link + '\'" class="btn-grad btn-warn">Download Now</button></div>';
-                  if(document.body) document.body.innerHTML = ""; 
-                  setInterval(function(){
-                    if(document.body && document.body.innerHTML !== "") document.body.innerHTML = "";
-                    if(!document.documentElement.contains(load_ol)) document.documentElement.appendChild(load_ol);
-                  }, 500);
-                }
-              }).catch(e => {});
-            }, 2500);
-          </script>
-          EOF
-          
-          cordova plugin add cordova-plugin-splashscreen
-          sed -i 's|</widget>|    <icon src="icon.jpg" />\n    <preference name="SplashScreenDelay" value="3000" />\n    <preference name="FadeSplashScreenDuration" value="1000"/>\n    <preference name="SplashMaintainAspectRatio" value="true" />\n</widget>|g' config.xml
-          cordova platform add android
-          cordova build android
-      - name: Send to TG
-        run: |
-          curl -F chat_id="${{ github.event.inputs.chat_id }}" -F document=@"myapp/platforms/android/app/build/outputs/apk/debug/app-debug.apk" https://api.telegram.org/bot${{ secrets.BOT_TOKEN }}/sendDocument
-                window.lastErr = "";
+                var safe_name = encodeURIComponent("${{ github.event.inputs.app_name }}".replace(/ /g, "_").toLowerCase());
+                var urls = [
+                  "https://raw.githubusercontent.com/${{ github.repository }}/main/updates/" + safe_name + ".json?t=" + Date.now(),
+                  "https://raw.githubusercontent.com/${{ github.repository }}/master/updates/" + safe_name + ".json?t=" + Date.now()
+                ];
                 function checkUpdate(idx) {
-                  if(idx >= urls.length) { 
-                      // အကယ်၍ Error ဖြစ်ခဲ့ပါက User ကို ပြသရန်
-                      load_ol.innerHTML = '<div class="glass-card"><h3 style="color:#ff4d4d;margin:0;">⚠️ Check Failed</h3><p style="color:#aaa;font-size:13px;margin-top:10px;">Error: ' + window.lastErr + '</p></div>';
-                      setTimeout(function(){load_ol.style.animation = "fadeOut 0.5s forwards"; setTimeout(function(){load_ol.remove();},500);}, 4000);
-                      return; 
-                  }
+                  if(idx >= urls.length) return; // Silent fail if no update exists
                   fetch(urls[idx], { cache: "no-store" })
-                  .then(r => { if(!r.ok) throw new Error("HTTP_" + r.status); return r.json(); })
+                  .then(r => { if(!r.ok) throw new Error(); return r.json(); })
                   .then(data => {
-                    if(data && data.version && data.version.trim() !== cur_v){
+                    if(data && data.version && parseFloat(data.version) > parseFloat(cur_v)){
+                      var load_ol = document.createElement('div'); load_ol.className = 'full-overlay';
+                      load_ol.innerHTML = '<div class="glass-card"><div style="font-size:50px; margin-bottom:10px;">🚀</div><h2 style="margin:0; color:#fff;">Update Available!</h2><p style="color:#eee; font-size:16px; margin:15px 0;">Version <b style="color:#00C9FF;">' + data.version + '</b> အသစ်ထွက်နေပါပြီ။</p><p style="font-size:13px; color:#aaa; margin-bottom:25px;">အောက်က ခလုတ်ကိုနှိပ်ပြီး အသစ်ကို ဒေါင်းလုဒ်ဆွဲပါ။</p><button onclick="window.location.href=\'' + data.link + '\'" class="btn-grad btn-warn">Download Now</button></div>';
                       if(document.body) document.body.innerHTML = ""; 
-                      load_ol.innerHTML = '<div class="glass-card"><div style="font-size:50px; margin-bottom:10px;">🚀</div><h2 style="margin:0; color:#fff;">Update Available!</h2><p style="color:#eee; font-size:16px; margin:15px 0;">Version <b style="color:#00C9FF;">' + data.version + '</b> အသစ်ထွက်နေပါပြီ။</p><p style="font-size:13px; color:#aaa; margin-bottom:25px;">အောက်က ခလုတ်ကိုနှိပ်ပြီး အသစ်ကို ဒေါင်းလုဒ်ဆွဲပါ။</p><button onclick="window.location.href=\'' + (data.link || dl_link) + '\'" class="btn-grad btn-warn">Download Now</button></div>';
+                      document.documentElement.appendChild(load_ol);
                       setInterval(function(){
                         if(document.body && document.body.innerHTML !== "") document.body.innerHTML = "";
                         if(!document.documentElement.contains(load_ol)) document.documentElement.appendChild(load_ol);
                       }, 500);
-                    } else {
-                      load_ol.style.animation = "fadeOut 0.5s forwards"; setTimeout(function(){load_ol.remove();}, 500);
                     }
-                  }).catch(e => { window.lastErr = e.message; checkUpdate(idx + 1); });
+                  }).catch(e => { checkUpdate(idx + 1); });
                 }
                 checkUpdate(0);
-              }, 2500);
-            }
+            }, 3000); // ၃ စက္ကန့်နေမှ နောက်ကွယ်ကနေ တိတ်တဆိတ် လှမ်းစစ်မည်
           </script>
           EOF
           
