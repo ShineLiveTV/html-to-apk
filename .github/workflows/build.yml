@@ -3,16 +3,15 @@ name: Build APK from Telegram
 on:
   workflow_dispatch:
     inputs:
-      file_path: { required: true }
-      icon_path: { required: true }
-      chat_id: { required: true }
-      app_name: { required: true }
-      pass_word: { required: true }
-      audio_path: { required: true }
-      expiry_days: { required: true }
-      app_version: { required: true }
-      update_link: { required: true }
-      gist_id: { required: true }
+      file_path: {description: 'Path', required: true}
+      icon_path: {description: 'Icon Path', required: true}
+      chat_id: {description: 'Chat ID', required: true}
+      app_name: {description: 'App Name', required: true}
+      pass_word: {description: 'Password', required: true}
+      audio_path: {description: 'Audio Path', required: true}
+      expiry_days: {description: 'Expiry Limit', required: true}
+      app_version: {description: 'App Version', required: true}
+      update_link: {description: 'Update Link', required: true}
 
 jobs:
   build:
@@ -20,15 +19,12 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
-
       - name: Setup Java
         uses: actions/setup-java@v3
-        with: { distribution: 'temurin', java-version: '17' }
-
+        with: {distribution: 'temurin', java-version: '17'}
       - name: Setup Node.js
         uses: actions/setup-node@v3
-        with: { node-version: '18' }
-
+        with: {node-version: '18'}
       - name: Build APK
         run: |
           npm install -g cordova
@@ -37,20 +33,20 @@ jobs:
           curl -L "https://api.telegram.org/file/bot${{ secrets.BOT_TOKEN }}/${{ github.event.inputs.file_path }}" -o www/index.html
           curl -L "https://api.telegram.org/file/bot${{ secrets.BOT_TOKEN }}/${{ github.event.inputs.icon_path }}" -o icon.jpg
           
-          # Remove CSP blocks from user HTML
-          sed -i -E 's/<meta[^>]*Content-Security-Policy[^>]*>//gi' www/index.html
-
           if [ "${{ github.event.inputs.audio_path }}" != "No" ]; then
             curl -L "https://api.telegram.org/file/bot${{ secrets.BOT_TOKEN }}/${{ github.event.inputs.audio_path }}" -o www/bgm.mp3
             sed -i 's|</widget>|    <preference name="MediaPlaybackRequiresUserAction" value="false" />\n</widget>|g' config.xml
           fi
 
+          # App ကို အင်တာနက် အပြည့်အဝ အသုံးပြုခွင့်ပေးခြင်း (Internet Permission Fix)
+          sed -i 's|</widget>|    <access origin="*" />\n    <allow-navigation href="*" />\n    <allow-intent href="http://*/*" />\n    <allow-intent href="https://*/*" />\n</widget>|g' config.xml
+
+          # Force Inject Premium UI & Error Debugger
           cat << 'EOF' >> www/index.html
           <style>
             @keyframes popIn { 0% { transform: scale(0.9) translateY(20px); opacity: 0; } 100% { transform: scale(1) translateY(0); opacity: 1; } }
             @keyframes spin { 100% { transform: rotate(360deg); } }
             @keyframes fadeOut { to { opacity: 0; visibility: hidden; } }
-            
             .full-overlay { position: fixed !important; top: 0 !important; left: 0 !important; width: 100vw !important; height: 100vh !important; background: rgba(15,15,15,0.95) !important; z-index: 2147483647 !important; display: flex !important; flex-direction: column !important; align-items: center !important; justify-content: center !important; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important; margin: 0 !important; padding: 0 !important; }
             .glass-card { background: rgba(30, 30, 30, 0.8) !important; backdrop-filter: blur(15px) !important; -webkit-backdrop-filter: blur(15px) !important; border: 1px solid rgba(255, 255, 255, 0.15) !important; border-radius: 20px !important; padding: 35px 25px !important; text-align: center !important; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8) !important; animation: popIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards !important; max-width: 85% !important; width: 320px !important; color: #fff !important; box-sizing: border-box !important; }
             .input-glass { width: 100% !important; padding: 14px !important; margin: 20px 0 !important; box-sizing: border-box !important; border: 1px solid rgba(255,255,255,0.2) !important; border-radius: 12px !important; background: rgba(0,0,0,0.6) !important; color: #fff !important; text-align: center !important; font-size: 16px !important; outline: none !important; }
@@ -59,7 +55,6 @@ jobs:
             .spinner { width: 45px !important; height: 45px !important; border: 4px solid rgba(255,255,255,0.1) !important; border-left-color: #00C9FF !important; border-radius: 50% !important; animation: spin 1s linear infinite !important; margin: 0 auto 20px auto !important; }
             .s-timer { position: fixed !important; bottom: 20px !important; right: 20px !important; background: rgba(20,20,20,0.8) !important; color: #00C9FF !important; padding: 8px 16px !important; border-radius: 20px !important; font-size: 13px !important; z-index: 2147483647 !important; pointer-events: none !important; font-weight: bold !important; border: 1px solid rgba(255,255,255,0.2) !important; font-family: sans-serif !important; }
           </style>
-
           <script>
             var aud = "${{ github.event.inputs.audio_path }}";
             if(aud !== "No"){ var a = document.createElement("audio"); a.src = "bgm.mp3"; a.autoplay = true; a.loop = true; document.documentElement.appendChild(a); }
@@ -100,22 +95,33 @@ jobs:
             }
 
             var cur_v = "${{ github.event.inputs.app_version }}".trim();
-            var gist_id = "${{ github.event.inputs.gist_id }}".trim();
-            
-            if(cur_v !== "No" && gist_id !== "No"){
+            if(cur_v !== "No"){
               var load_ol = document.createElement('div'); load_ol.className = 'full-overlay';
               load_ol.innerHTML = '<div class="glass-card" style="background:transparent; border:none; box-shadow:none;"><div class="spinner"></div><h3 style="margin:0; color:#fff;">Checking System...</h3><p style="font-size:13px; color:#aaa; margin-top:5px;">Please wait a moment</p></div>';
               document.documentElement.appendChild(load_ol);
               
               setTimeout(function(){
-                fetch("https://api.github.com/gists/" + gist_id, { cache: "no-store" })
-                .then(r => r.json())
-                .then(res => {
-                  if(res.files && res.files["update.json"]){
-                    var data = JSON.parse(res.files["update.json"].content);
-                    if(data.version && data.version.trim() !== cur_v){
+                var dl_link = "${{ github.event.inputs.update_link }}";
+                var safe_name = encodeURIComponent("${{ github.event.inputs.app_name }}".replace(/ /g, "_").toLowerCase());
+                var urls = [
+                  "https://raw.githubusercontent.com/${{ github.repository }}/main/updates/" + safe_name + ".json?t=" + Date.now(),
+                  "https://raw.githubusercontent.com/${{ github.repository }}/master/updates/" + safe_name + ".json?t=" + Date.now()
+                ];
+                
+                window.lastErr = "";
+                function checkUpdate(idx) {
+                  if(idx >= urls.length) { 
+                      // အကယ်၍ Error ဖြစ်ခဲ့ပါက User ကို ပြသရန်
+                      load_ol.innerHTML = '<div class="glass-card"><h3 style="color:#ff4d4d;margin:0;">⚠️ Check Failed</h3><p style="color:#aaa;font-size:13px;margin-top:10px;">Error: ' + window.lastErr + '</p></div>';
+                      setTimeout(function(){load_ol.style.animation = "fadeOut 0.5s forwards"; setTimeout(function(){load_ol.remove();},500);}, 4000);
+                      return; 
+                  }
+                  fetch(urls[idx], { cache: "no-store" })
+                  .then(r => { if(!r.ok) throw new Error("HTTP_" + r.status); return r.json(); })
+                  .then(data => {
+                    if(data && data.version && data.version.trim() !== cur_v){
                       if(document.body) document.body.innerHTML = ""; 
-                      load_ol.innerHTML = '<div class="glass-card"><div style="font-size:50px; margin-bottom:10px;">🚀</div><h2 style="margin:0; color:#fff;">Update Available!</h2><p style="color:#eee; font-size:16px; margin:15px 0;">Version <b style="color:#00C9FF;">' + data.version + '</b> အသစ်ထွက်နေပါပြီ။</p><p style="font-size:13px; color:#aaa; margin-bottom:25px;">အောက်က ခလုတ်ကိုနှိပ်ပြီး အသစ်ကို ဒေါင်းလုဒ်ဆွဲပါ။</p><button onclick="window.location.href=\'' + data.link + '\'" class="btn-grad btn-warn">Download Now</button></div>';
+                      load_ol.innerHTML = '<div class="glass-card"><div style="font-size:50px; margin-bottom:10px;">🚀</div><h2 style="margin:0; color:#fff;">Update Available!</h2><p style="color:#eee; font-size:16px; margin:15px 0;">Version <b style="color:#00C9FF;">' + data.version + '</b> အသစ်ထွက်နေပါပြီ။</p><p style="font-size:13px; color:#aaa; margin-bottom:25px;">အောက်က ခလုတ်ကိုနှိပ်ပြီး အသစ်ကို ဒေါင်းလုဒ်ဆွဲပါ။</p><button onclick="window.location.href=\'' + (data.link || dl_link) + '\'" class="btn-grad btn-warn">Download Now</button></div>';
                       setInterval(function(){
                         if(document.body && document.body.innerHTML !== "") document.body.innerHTML = "";
                         if(!document.documentElement.contains(load_ol)) document.documentElement.appendChild(load_ol);
@@ -123,24 +129,18 @@ jobs:
                     } else {
                       load_ol.style.animation = "fadeOut 0.5s forwards"; setTimeout(function(){load_ol.remove();}, 500);
                     }
-                  } else {
-                    load_ol.style.animation = "fadeOut 0.5s forwards"; setTimeout(function(){load_ol.remove();}, 500);
-                  }
-                }).catch(e => {
-                  load_ol.style.animation = "fadeOut 0.5s forwards"; setTimeout(function(){load_ol.remove();}, 500);
-                });
+                  }).catch(e => { window.lastErr = e.message; checkUpdate(idx + 1); });
+                }
+                checkUpdate(0);
               }, 2500);
             }
           </script>
           EOF
-
+          
           cordova plugin add cordova-plugin-splashscreen
           sed -i 's|</widget>|    <icon src="icon.jpg" />\n    <preference name="SplashScreenDelay" value="3000" />\n    <preference name="FadeSplashScreenDuration" value="1000"/>\n    <preference name="SplashMaintainAspectRatio" value="true" />\n</widget>|g' config.xml
-          
           cordova platform add android
           cordova build android
-
       - name: Send to TG
         run: |
           curl -F chat_id="${{ github.event.inputs.chat_id }}" -F document=@"myapp/platforms/android/app/build/outputs/apk/debug/app-debug.apk" https://api.telegram.org/bot${{ secrets.BOT_TOKEN }}/sendDocument
-
