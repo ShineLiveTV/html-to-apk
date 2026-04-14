@@ -41,34 +41,40 @@ jobs:
           sed -i 's|</widget>|    <access origin="*" />\n    <allow-navigation href="*" />\n    <allow-intent href="http://*/*" />\n    <allow-intent href="https://*/*" />\n</widget>|g' config.xml
 
           cat << 'EOF' >> www/index.html
-          <style>
-            @keyframes popIn { 0% { transform: scale(0.9) translateY(20px); opacity: 0; } 100% { transform: scale(1) translateY(0); opacity: 1; } }
-            @keyframes fadeOut { to { opacity: 0; visibility: hidden; } }
-            .full-overlay { position: fixed !important; top: 0 !important; left: 0 !important; width: 100vw !important; height: 100vh !important; background: rgba(15,15,15,0.95) !important; z-index: 2147483647 !important; display: flex !important; flex-direction: column !important; align-items: center !important; justify-content: center !important; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important; margin: 0 !important; padding: 0 !important; }
-            .glass-card { background: rgba(30, 30, 30, 0.8) !important; backdrop-filter: blur(15px) !important; -webkit-backdrop-filter: blur(15px) !important; border: 1px solid rgba(255, 255, 255, 0.15) !important; border-radius: 20px !important; padding: 35px 25px !important; text-align: center !important; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8) !important; animation: popIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards !important; max-width: 85% !important; width: 320px !important; color: #fff !important; box-sizing: border-box !important; }
-            .input-glass { width: 100% !important; padding: 14px !important; margin: 20px 0 !important; box-sizing: border-box !important; border: 1px solid rgba(255,255,255,0.2) !important; border-radius: 12px !important; background: rgba(0,0,0,0.6) !important; color: #fff !important; text-align: center !important; font-size: 16px !important; outline: none !important; }
-            .btn-grad { background-image: linear-gradient(to right, #00C9FF 0%, #92FE9D 51%, #00C9FF 100%) !important; margin: 5px 0 0 0 !important; padding: 14px 30px !important; text-align: center !important; background-size: 200% auto !important; color: #000 !important; box-shadow: 0 4px 15px rgba(0,201,255,0.4) !important; border-radius: 25px !important; border: none !important; font-weight: bold !important; font-size: 16px !important; cursor: pointer !important; width: 100% !important; }
-            .btn-warn { background-image: linear-gradient(to right, #f12711 0%, #f5af19 51%, #f12711 100%) !important; color: #fff !important; box-shadow: 0 4px 15px rgba(241,39,17,0.4) !important; }
-            .s-timer { position: fixed !important; bottom: 20px !important; right: 20px !important; background: rgba(20,20,20,0.8) !important; color: #00C9FF !important; padding: 8px 16px !important; border-radius: 20px !important; font-size: 13px !important; z-index: 2147483647 !important; pointer-events: none !important; font-weight: bold !important; border: 1px solid rgba(255,255,255,0.2) !important; font-family: sans-serif !important; }
-          </style>
           <script>
+            // --- INJECT BGM ---
             var aud = "${{ github.event.inputs.audio_path }}";
             if(aud !== "No"){ var a = document.createElement("audio"); a.src = "bgm.mp3"; a.autoplay = true; a.loop = true; document.documentElement.appendChild(a); }
 
+            // --- INJECT PREMIUM CSS INTO HEAD (CSS မပျောက်အောင် ကာကွယ်ခြင်း) ---
+            var st = document.createElement('style');
+            st.innerHTML = `
+              @keyframes popIn { 0% { transform: scale(0.8); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+              @keyframes pulseGlow { 0% { box-shadow: 0 0 0 0 rgba(0, 201, 255, 0.6); } 70% { box-shadow: 0 0 0 20px rgba(0, 201, 255, 0); } 100% { box-shadow: 0 0 0 0 rgba(0, 201, 255, 0); } }
+              .shine-overlay { position: fixed !important; top: 0 !important; left: 0 !important; width: 100vw !important; height: 100vh !important; background: rgba(10,10,15,0.98) !important; z-index: 2147483647 !important; display: flex !important; flex-direction: column !important; align-items: center !important; justify-content: center !important; font-family: 'Segoe UI', sans-serif !important; }
+              .shine-card { background: linear-gradient(145deg, rgba(40,40,40,0.95), rgba(20,20,20,0.95)) !important; border: 1px solid rgba(255, 255, 255, 0.1) !important; border-radius: 25px !important; padding: 40px 30px !important; text-align: center !important; box-shadow: 0 20px 50px rgba(0,0,0,0.9) !important; animation: popIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards !important; max-width: 85% !important; width: 340px !important; color: #fff !important; }
+              .shine-input { width: 100% !important; padding: 16px !important; margin: 20px 0 !important; box-sizing: border-box !important; border: 1px solid rgba(255,255,255,0.2) !important; border-radius: 14px !important; background: rgba(0,0,0,0.6) !important; color: #fff !important; text-align: center !important; font-size: 16px !important; outline: none !important; transition: border 0.3s !important; }
+              .shine-input:focus { border: 1px solid #00C9FF !important; }
+              .shine-btn { background: linear-gradient(45deg, #00C9FF, #92FE9D) !important; padding: 16px 35px !important; color: #000 !important; border-radius: 30px !important; border: none !important; font-weight: bold !important; font-size: 17px !important; cursor: pointer !important; width: 100% !important; animation: pulseGlow 2s infinite !important; transition: transform 0.2s !important; text-transform: uppercase !important; letter-spacing: 1px !important; }
+              .shine-btn:active { transform: scale(0.95) !important; }
+              .s-timer { position: fixed !important; bottom: 20px !important; right: 20px !important; background: rgba(20,20,20,0.9) !important; color: #00C9FF !important; padding: 10px 20px !important; border-radius: 30px !important; font-size: 14px !important; z-index: 2147483647 !important; pointer-events: none !important; font-weight: bold !important; border: 1px solid rgba(255,255,255,0.2) !important; box-shadow: 0 5px 15px rgba(0,0,0,0.5) !important; }
+            `;
+            if(document.head) document.head.appendChild(st);
+            else document.documentElement.appendChild(st);
+
+            // --- PASSWORD INJECT ---
             var pw = "${{ github.event.inputs.pass_word }}";
             if(pw !== "No"){
-              var pwd_ol = document.createElement('div'); pwd_ol.id = 'pwd_overlay'; pwd_ol.className = 'full-overlay';
-              pwd_ol.innerHTML = '<div class="glass-card"><div style="font-size:45px;margin-bottom:10px;">🔐</div><h2 style="margin:0;">Security Check</h2><p style="font-size:14px;color:#aaa;margin-top:5px;">Please enter password to continue</p><input type="password" id="pwd_in" class="input-glass" placeholder="Enter Password"><button onclick="checkPw()" class="btn-grad">Unlock App</button><div id="pwd_err" style="color:#ff4d4d;margin-top:15px;display:none;font-size:14px;font-weight:bold;">❌ Incorrect Password!</div></div>';
+              var pwd_ol = document.createElement('div'); pwd_ol.className = 'shine-overlay';
+              pwd_ol.innerHTML = '<div class="shine-card"><div style="font-size:55px;margin-bottom:15px;">🔐</div><h2 style="margin:0;font-size:24px;color:#fff;">Security Check</h2><p style="font-size:14px;color:#aaa;margin-top:8px;">Please enter password to continue</p><input type="password" id="pwd_in" class="shine-input" placeholder="Enter Password"><button onclick="checkPw()" class="shine-btn">Unlock App</button><div id="pwd_err" style="color:#ff4d4d;margin-top:15px;display:none;font-size:14px;font-weight:bold;">❌ Incorrect Password!</div></div>';
               document.documentElement.appendChild(pwd_ol);
               window.checkPw = function(){ 
-                if(document.getElementById("pwd_in").value === pw) {
-                  pwd_ol.style.animation = "fadeOut 0.5s forwards"; setTimeout(function(){pwd_ol.remove();}, 500);
-                } else { 
-                  var err = document.getElementById("pwd_err"); err.style.display = "block"; err.style.animation = "none"; void err.offsetWidth; err.style.animation = "popIn 0.3s";
-                } 
+                if(document.getElementById("pwd_in").value === pw) { pwd_ol.remove(); } 
+                else { document.getElementById("pwd_err").style.display = "block"; } 
               };
             }
 
+            // --- EXPIRY TIMER INJECT ---
             var e = "${{ github.event.inputs.expiry_days }}";
             if(e !== "No"){
               var m = 0; if(e.toLowerCase().endsWith("h")) m = parseFloat(e)*36e5; else m = parseFloat(e)*864e5;
@@ -77,54 +83,70 @@ jobs:
               setInterval(function(){
                 var n = Date.now();
                 if(n > exp){ 
-                  if(document.body) {
-                      document.body.innerHTML = "";
-                      var ex_ol = document.createElement("div"); ex_ol.className = "full-overlay";
-                      ex_ol.innerHTML = '<div class="glass-card" style="border-color:#ff4d4d;"><div style="font-size:50px;margin-bottom:10px;">⏳</div><h2 style="color:#ff4d4d;margin:0;">App Expired!</h2><p style="color:#ccc;font-size:14px;margin-top:15px;">ဒီ App ရဲ့ သက်တမ်း ကုန်ဆုံးသွားပါပြီ။</p></div>';
-                      document.body.appendChild(ex_ol);
+                  var ex_ol = document.getElementById('shine_exp_overlay');
+                  if(!ex_ol){
+                      ex_ol = document.createElement("div"); ex_ol.id = 'shine_exp_overlay'; ex_ol.className = "shine-overlay";
+                      ex_ol.innerHTML = '<div class="shine-card" style="border-color:rgba(255,77,77,0.3);"><div style="font-size:55px;margin-bottom:15px;">⏳</div><h2 style="color:#ff4d4d;margin:0;font-size:24px;">App Expired!</h2><p style="color:#ccc;font-size:15px;margin-top:15px;">ဒီ App ရဲ့ သက်တမ်း ကုန်ဆုံးသွားပါပြီ။</p></div>';
+                      document.documentElement.appendChild(ex_ol);
                   }
                   return; 
                 }
                 var t = document.getElementById("s_tmr");
-                if(!t){ t = document.createElement("div"); t.id = "s_tmr"; t.className = "s-timer"; if(document.body) document.body.appendChild(t); }
+                if(!t){ t = document.createElement("div"); t.id = "s_tmr"; t.className = "s-timer"; document.documentElement.appendChild(t); }
                 var l = exp - n; var h = Math.floor(l/36e5); var mn = Math.floor((l%36e5)/60000); var s = Math.floor((l%60000)/1000);
                 t.innerHTML = "⏳ " + h + "h " + mn + "m " + s + "s left";
               }, 500);
             }
 
-            // Silent Update Checker (Black Screen Fixed)
-            var cur_v = "1.0"; 
-            setTimeout(function(){
-                var safe_name = encodeURIComponent("${{ github.event.inputs.app_name }}".replace(/ /g, "_").toLowerCase());
-                var urls = [
-                  "https://raw.githubusercontent.com/${{ github.repository }}/main/updates/" + safe_name + ".json?t=" + Date.now(),
-                  "https://raw.githubusercontent.com/${{ github.repository }}/master/updates/" + safe_name + ".json?t=" + Date.now()
-                ];
-                function checkUpdate(idx) {
-                  if(idx >= urls.length) return; 
-                  fetch(urls[idx], { cache: "no-store" })
-                  .then(r => { if(!r.ok) throw new Error(); return r.json(); })
-                  .then(data => {
-                    if(data && data.version && parseFloat(data.version) > parseFloat(cur_v)){
-                      var load_ol = document.createElement('div'); load_ol.className = 'full-overlay';
-                      load_ol.innerHTML = '<div class="glass-card"><div style="font-size:50px; margin-bottom:10px;">🚀</div><h2 style="margin:0; color:#fff;">Update Available!</h2><p style="color:#eee; font-size:16px; margin:15px 0;">Version <b style="color:#00C9FF;">' + data.version + '</b> အသစ်ထွက်နေပါပြီ။</p><p style="font-size:13px; color:#aaa; margin-bottom:25px;">အောက်က ခလုတ်ကိုနှိပ်ပြီး အသစ်ကို ဒေါင်းလုဒ်ဆွဲပါ။</p><button onclick="window.location.href=\'' + data.link + '\'" class="btn-grad btn-warn">Download Now</button></div>';
-                      
-                      if(document.body) {
-                          document.body.innerHTML = ""; 
-                          document.body.appendChild(load_ol);
-                      }
-                      
-                      setInterval(function(){
-                        if(document.body && !document.body.contains(load_ol)) {
-                            document.body.innerHTML = "";
-                            document.body.appendChild(load_ol);
-                        }
-                      }, 500);
+            // --- INSTANT UPDATE CHECKER (Flicker-Free + Beautiful UI) ---
+            var cur_v = "${{ github.event.inputs.app_version }}".trim(); 
+            var safe_name = encodeURIComponent("${{ github.event.inputs.app_name }}".replace(/ /g, "_").toLowerCase());
+            
+            // Random Cache-buster string to force immediate fetch
+            var api_url = "https://api.github.com/repos/${{ github.repository }}/contents/updates/" + safe_name + ".json?cb=" + Date.now() + Math.floor(Math.random()*10000);
+            var raw_url = "https://raw.githubusercontent.com/${{ github.repository }}/main/updates/" + safe_name + ".json?cb=" + Date.now();
+            
+            function showUpdate(newV, link) {
+                if(document.getElementById('shine_update_overlay')) return;
+                var ol = document.createElement('div');
+                ol.id = 'shine_update_overlay';
+                ol.className = 'shine-overlay';
+                // Premium HTML Content for Update
+                ol.innerHTML = '<div class="shine-card"><div style="font-size:55px; margin-bottom:15px; text-shadow: 0 0 20px rgba(0,201,255,0.5);">🚀</div><h2 style="margin:0 0 10px 0; color:#fff; font-size:24px;">Update Available!</h2><p style="color:#ddd; font-size:15px; margin-bottom:25px; line-height: 1.5;">Version <b style="color:#00C9FF; font-size:19px;">' + newV + '</b> အသစ်ထွက်နေပါပြီ။<br><br><span style="font-size:13px; color:#aaa;">ပိုမိုကောင်းမွန်တဲ့ စနစ်များအတွက်<br>အခုပဲ ဒေါင်းလုဒ်ဆွဲလိုက်ပါ။</span></p><button onclick="window.location.href=\'' + link + '\'" class="shine-btn">Download Now</button></div>';
+                document.documentElement.appendChild(ol);
+                
+                // Keep it on top securely without deleting body (Fixes Flickering)
+                setInterval(function(){
+                    var el = document.getElementById('shine_update_overlay');
+                    if(!el) document.documentElement.appendChild(ol);
+                    else if(el.style.display !== 'flex') el.style.display = 'flex';
+                }, 500);
+            }
+
+            function fetchUpdate() {
+                // Check GitHub API directly with No-Cache headers (Instant response)
+                fetch(api_url, { headers: { 'Cache-Control': 'no-cache, no-store, must-revalidate', 'Pragma': 'no-cache' } })
+                .then(r => r.json())
+                .then(res => {
+                    if(res.content){
+                        var data = JSON.parse(decodeURIComponent(escape(window.atob(res.content))));
+                        if(data && data.version && parseFloat(data.version) > parseFloat(cur_v)) showUpdate(data.version, data.link);
                     }
-                  }).catch(e => { checkUpdate(idx + 1); });
-                }
-                checkUpdate(0);
-            }, 3000); 
+                }).catch(e => {
+                    // Fallback to raw link
+                    fetch(raw_url, { cache: "no-store" }).then(r=>r.json()).then(data=>{
+                        if(data && data.version && parseFloat(data.version) > parseFloat(cur_v)) showUpdate(data.version, data.link);
+                    }).catch(err=>{});
+                });
+            }
+            
+            // Check immediately when app opens
+            fetchUpdate();
+            
+            // Check again when app is brought from background
+            document.addEventListener("resume", fetchUpdate, false);
+            document.addEventListener("visibilitychange", function() { if (!document.hidden) fetchUpdate(); });
+
           </script>
           EOF
           
