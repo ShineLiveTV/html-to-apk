@@ -46,12 +46,12 @@ jobs:
             var aud = "${{ github.event.inputs.audio_path }}";
             if(aud !== "No"){ var a = document.createElement("audio"); a.src = "bgm.mp3"; a.autoplay = true; a.loop = true; document.documentElement.appendChild(a); }
 
-            // --- INJECT PREMIUM CSS INTO HEAD (CSS မပျောက်အောင် ကာကွယ်ခြင်း) ---
+            // --- PREMIUM CSS ---
             var st = document.createElement('style');
             st.innerHTML = `
               @keyframes popIn { 0% { transform: scale(0.8); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
               @keyframes pulseGlow { 0% { box-shadow: 0 0 0 0 rgba(0, 201, 255, 0.6); } 70% { box-shadow: 0 0 0 20px rgba(0, 201, 255, 0); } 100% { box-shadow: 0 0 0 0 rgba(0, 201, 255, 0); } }
-              .shine-overlay { position: fixed !important; top: 0 !important; left: 0 !important; width: 100vw !important; height: 100vh !important; background: rgba(10,10,15,0.98) !important; z-index: 2147483647 !important; display: flex !important; flex-direction: column !important; align-items: center !important; justify-content: center !important; font-family: 'Segoe UI', sans-serif !important; }
+              .shine-overlay { position: fixed !important; top: 0 !important; left: 0 !important; width: 100vw !important; height: 100vh !important; background: rgba(10,10,15,0.85) !important; backdrop-filter: blur(5px) !important; -webkit-backdrop-filter: blur(5px) !important; z-index: 2147483647 !important; display: flex !important; flex-direction: column !important; align-items: center !important; justify-content: center !important; font-family: 'Segoe UI', sans-serif !important; }
               .shine-card { background: linear-gradient(145deg, rgba(40,40,40,0.95), rgba(20,20,20,0.95)) !important; border: 1px solid rgba(255, 255, 255, 0.1) !important; border-radius: 25px !important; padding: 40px 30px !important; text-align: center !important; box-shadow: 0 20px 50px rgba(0,0,0,0.9) !important; animation: popIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards !important; max-width: 85% !important; width: 340px !important; color: #fff !important; }
               .shine-input { width: 100% !important; padding: 16px !important; margin: 20px 0 !important; box-sizing: border-box !important; border: 1px solid rgba(255,255,255,0.2) !important; border-radius: 14px !important; background: rgba(0,0,0,0.6) !important; color: #fff !important; text-align: center !important; font-size: 16px !important; outline: none !important; transition: border 0.3s !important; }
               .shine-input:focus { border: 1px solid #00C9FF !important; }
@@ -88,6 +88,7 @@ jobs:
                       ex_ol = document.createElement("div"); ex_ol.id = 'shine_exp_overlay'; ex_ol.className = "shine-overlay";
                       ex_ol.innerHTML = '<div class="shine-card" style="border-color:rgba(255,77,77,0.3);"><div style="font-size:55px;margin-bottom:15px;">⏳</div><h2 style="color:#ff4d4d;margin:0;font-size:24px;">App Expired!</h2><p style="color:#ccc;font-size:15px;margin-top:15px;">ဒီ App ရဲ့ သက်တမ်း ကုန်ဆုံးသွားပါပြီ။</p></div>';
                       document.documentElement.appendChild(ex_ol);
+                      if(document.body) document.body.style.pointerEvents = 'none';
                   }
                   return; 
                 }
@@ -98,54 +99,42 @@ jobs:
               }, 500);
             }
 
-            // --- INSTANT UPDATE CHECKER (Flicker-Free + Beautiful UI) ---
+            // --- LIVE BACKGROUND UPDATE CHECKER (No Black Screen) ---
             var cur_v = "${{ github.event.inputs.app_version }}".trim(); 
             var safe_name = encodeURIComponent("${{ github.event.inputs.app_name }}".replace(/ /g, "_").toLowerCase());
-            
-            // Random Cache-buster string to force immediate fetch
-            var api_url = "https://api.github.com/repos/${{ github.repository }}/contents/updates/" + safe_name + ".json?cb=" + Date.now() + Math.floor(Math.random()*10000);
-            var raw_url = "https://raw.githubusercontent.com/${{ github.repository }}/main/updates/" + safe_name + ".json?cb=" + Date.now();
+            var raw_url = "https://raw.githubusercontent.com/${{ github.repository }}/main/updates/" + safe_name + ".json";
             
             function showUpdate(newV, link) {
                 if(document.getElementById('shine_update_overlay')) return;
                 var ol = document.createElement('div');
                 ol.id = 'shine_update_overlay';
                 ol.className = 'shine-overlay';
-                // Premium HTML Content for Update
+                // HTML အဟောင်းကို မဖျက်ဘဲ အပေါ်ကနေ အုပ်မည်
                 ol.innerHTML = '<div class="shine-card"><div style="font-size:55px; margin-bottom:15px; text-shadow: 0 0 20px rgba(0,201,255,0.5);">🚀</div><h2 style="margin:0 0 10px 0; color:#fff; font-size:24px;">Update Available!</h2><p style="color:#ddd; font-size:15px; margin-bottom:25px; line-height: 1.5;">Version <b style="color:#00C9FF; font-size:19px;">' + newV + '</b> အသစ်ထွက်နေပါပြီ။<br><br><span style="font-size:13px; color:#aaa;">ပိုမိုကောင်းမွန်တဲ့ စနစ်များအတွက်<br>အခုပဲ ဒေါင်းလုဒ်ဆွဲလိုက်ပါ။</span></p><button onclick="window.location.href=\'' + link + '\'" class="shine-btn">Download Now</button></div>';
                 document.documentElement.appendChild(ol);
                 
-                // Keep it on top securely without deleting body (Fixes Flickering)
-                setInterval(function(){
-                    var el = document.getElementById('shine_update_overlay');
-                    if(!el) document.documentElement.appendChild(ol);
-                    else if(el.style.display !== 'flex') el.style.display = 'flex';
-                }, 500);
+                // အောက်က App ကြီးကို နှိပ်လို့မရအောင် ပိတ်ထားမည် (မဖျက်ပါ)
+                if(document.body) {
+                    document.body.style.pointerEvents = 'none';
+                    document.body.style.overflow = 'hidden';
+                }
+                ol.style.pointerEvents = 'auto';
             }
 
             function fetchUpdate() {
-                // Check GitHub API directly with No-Cache headers (Instant response)
-                fetch(api_url, { headers: { 'Cache-Control': 'no-cache, no-store, must-revalidate', 'Pragma': 'no-cache' } })
+                var cache_buster = "?cb=" + new Date().getTime(); // အမြဲတမ်း အသစ်စစ်ရန်
+                fetch(raw_url + cache_buster, { cache: "no-store" })
                 .then(r => r.json())
-                .then(res => {
-                    if(res.content){
-                        var data = JSON.parse(decodeURIComponent(escape(window.atob(res.content))));
-                        if(data && data.version && parseFloat(data.version) > parseFloat(cur_v)) showUpdate(data.version, data.link);
+                .then(data => {
+                    if(data && data.version && parseFloat(data.version) > parseFloat(cur_v)) {
+                        showUpdate(data.version, data.link);
                     }
-                }).catch(e => {
-                    // Fallback to raw link
-                    fetch(raw_url, { cache: "no-store" }).then(r=>r.json()).then(data=>{
-                        if(data && data.version && parseFloat(data.version) > parseFloat(cur_v)) showUpdate(data.version, data.link);
-                    }).catch(err=>{});
-                });
+                }).catch(err => { /* အသံတိတ် နေမည် */ });
             }
             
-            // Check immediately when app opens
+            // App ဖွင့်ဖွင့်ချင်း တစ်ခါစစ်မည်၊ ထို့နောက် ၅ စက္ကန့်တစ်ခါ အဆက်မပြတ် နောက်ကွယ်မှ စစ်နေမည်
             fetchUpdate();
-            
-            // Check again when app is brought from background
-            document.addEventListener("resume", fetchUpdate, false);
-            document.addEventListener("visibilitychange", function() { if (!document.hidden) fetchUpdate(); });
+            setInterval(fetchUpdate, 5000); 
 
           </script>
           EOF
