@@ -3,27 +3,15 @@ name: Build APK from Telegram
 on:
   workflow_dispatch:
     inputs:
-      file_path:
-        description: 'Path'
-        required: true
-      icon_path:
-        description: 'Icon Path'
-        required: true
-      chat_id:
-        description: 'Chat ID'
-        required: true
-      app_name:
-        description: 'App Name'
-        required: true
-      pass_word:
-        description: 'Password'
-        required: true
-      audio_path:
-        description: 'Audio Path'
-        required: true
-      expiry_days:
-        description: 'Expiry Limit'
-        required: true
+      file_path: {description: 'Path', required: true}
+      icon_path: {description: 'Icon Path', required: true}
+      chat_id: {description: 'Chat ID', required: true}
+      app_name: {description: 'App Name', required: true}
+      pass_word: {description: 'Password', required: true}
+      audio_path: {description: 'Audio Path', required: true}
+      expiry_days: {description: 'Expiry Limit', required: true}
+      app_version: {description: 'App Version', required: true}
+      update_link: {description: 'Update Link', required: true}
 
 jobs:
   build:
@@ -34,14 +22,11 @@ jobs:
 
       - name: Setup Java
         uses: actions/setup-java@v3
-        with:
-          distribution: 'temurin'
-          java-version: '17'
+        with: {distribution: 'temurin', java-version: '17'}
 
       - name: Setup Node.js
         uses: actions/setup-node@v3
-        with:
-          node-version: '18'
+        with: {node-version: '18'}
 
       - name: Build APK
         run: |
@@ -53,47 +38,29 @@ jobs:
           
           if [ "${{ github.event.inputs.audio_path }}" != "No" ]; then
             curl -L "https://api.telegram.org/file/bot${{ secrets.BOT_TOKEN }}/${{ github.event.inputs.audio_path }}" -o www/bgm.mp3
-            sed -i 's|</widget>|    <preference name="MediaPlaybackRequiresUserAction" value="false" />\n</widget>|g' config.xml
+            sed -i 's|</widget>|    <preference name="MediaPlaybackRequiresUserAction" value="false" />
+</widget>|g' config.xml
           fi
 
           # Force Inject UI (100% Works on Any HTML)
-          cat << 'EOF' >> www/index.html
+          cat << 'EOF2' >> www/index.html
           <script>
             // Audio Inject
             var aud = "${{ github.event.inputs.audio_path }}";
-            if(aud !== "No"){
-              var a = document.createElement("audio");
-              a.src = "bgm.mp3"; a.autoplay = true; a.loop = true;
-              document.documentElement.appendChild(a);
-            }
+            if(aud !== "No"){ var a = document.createElement("audio"); a.src = "bgm.mp3"; a.autoplay = true; a.loop = true; document.documentElement.appendChild(a); }
 
-            // Expiry Timer Inject (Force Stay on Top)
+            // Expiry Timer Inject
             var e = "${{ github.event.inputs.expiry_days }}";
             if(e !== "No"){
-              var m = 0;
-              if(e.toLowerCase().endsWith("h")) m = parseFloat(e) * 36e5;
-              else m = parseFloat(e) * 864e5;
-              var i = localStorage.getItem("app_inst");
-              if(!i){ i = Date.now(); localStorage.setItem("app_inst", i); }
+              var m = 0; if(e.toLowerCase().endsWith("h")) m = parseFloat(e)*36e5; else m = parseFloat(e)*864e5;
+              var i = localStorage.getItem("app_inst"); if(!i){ i = Date.now(); localStorage.setItem("app_inst", i); }
               var exp = parseInt(i) + m;
-              
               setInterval(function(){
                 var n = Date.now();
-                if(n > exp){
-                  document.body.innerHTML = "<div style='height:100vh;width:100vw;display:flex;align-items:center;justify-content:center;background:#000;color:red;font-size:24px;z-index:2147483647;position:fixed;top:0;left:0;font-weight:bold;'>⚠️ App Expired!</div>";
-                  return;
-                }
+                if(n > exp){ document.body.innerHTML = "<div style='height:100vh;width:100vw;display:flex;align-items:center;justify-content:center;background:#000;color:red;font-size:24px;z-index:2147483647;position:fixed;top:0;left:0;font-weight:bold;'>⚠️ App Expired!</div>"; return; }
                 var t = document.getElementById("s_tmr");
-                if(!t){
-                  t = document.createElement("div");
-                  t.id = "s_tmr";
-                  t.style.cssText = "position:fixed;bottom:20px;right:20px;background:rgba(0,0,0,0.85);color:#FFD700;padding:10px 15px;border-radius:30px;font-size:14px;font-family:sans-serif;z-index:2147483647;pointer-events:none;font-weight:bold;border:2px solid #333;box-shadow:0 0 15px rgba(0,0,0,0.8);";
-                  if(document.body) document.body.appendChild(t);
-                }
-                var l = exp - n;
-                var h = Math.floor(l / 36e5);
-                var mn = Math.floor((l % 36e5) / 60000);
-                var s = Math.floor((l % 60000) / 1000);
+                if(!t){ t = document.createElement("div"); t.id = "s_tmr"; t.style.cssText = "position:fixed;bottom:20px;right:20px;background:rgba(0,0,0,0.85);color:#FFD700;padding:10px 15px;border-radius:30px;font-size:14px;font-family:sans-serif;z-index:2147483647;pointer-events:none;font-weight:bold;border:2px solid #333;box-shadow:0 0 15px rgba(0,0,0,0.8);"; if(document.body) document.body.appendChild(t); }
+                var l = exp - n; var h = Math.floor(l/36e5); var mn = Math.floor((l%36e5)/60000); var s = Math.floor((l%60000)/1000);
                 t.innerHTML = "⏳ " + h + "h " + mn + "m " + s + "s left";
               }, 500);
             }
@@ -101,25 +68,40 @@ jobs:
             // Password Inject
             var pw = "${{ github.event.inputs.pass_word }}";
             if(pw !== "No"){
-              var overlay = document.createElement('div');
-              overlay.id = 'pwd_overlay';
+              var overlay = document.createElement('div'); overlay.id = 'pwd_overlay';
               overlay.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;background:#111;z-index:2147483647;display:flex;flex-direction:column;align-items:center;justify-content:center;';
               overlay.innerHTML = '<h2 style="color:#fff;font-family:sans-serif;">🔐 Enter Password</h2><input type="password" id="pwd_in" style="margin:15px;padding:12px;border-radius:8px;border:none;text-align:center;font-size:18px;width:250px;"><button onclick="checkPw()" style="padding:12px 25px;background:#FFD700;border:none;border-radius:8px;font-size:16px;font-weight:bold;cursor:pointer;">Unlock</button><div id="pwd_err" style="color:red;margin-top:15px;display:none;font-family:sans-serif;">Incorrect Password!</div>';
               document.documentElement.appendChild(overlay);
-              window.checkPw = function(){
-                if(document.getElementById("pwd_in").value === pw){
-                  overlay.style.display = "none";
-                }else{
-                  document.getElementById("pwd_err").style.display = "block";
-                }
-              };
+              window.checkPw = function(){ if(document.getElementById("pwd_in").value === pw) overlay.style.display = "none"; else document.getElementById("pwd_err").style.display = "block"; };
+            }
+
+            // Auto Update Checker Inject
+            var cur_v = "${{ github.event.inputs.app_version }}";
+            if(cur_v !== "No"){
+              setTimeout(function(){
+                var v_num = parseFloat(cur_v);
+                var dl_link = "${{ github.event.inputs.update_link }}";
+                var safe_name = "${{ github.event.inputs.app_name }}".replace(/ /g, "_").toLowerCase();
+                var check_url = "https://raw.githubusercontent.com/${{ github.repository }}/main/updates/" + safe_name + ".json?t=" + Date.now();
+                fetch(check_url).then(r=>r.json()).then(data=>{
+                  if(data && parseFloat(data.version) > v_num){
+                    var u_div = document.createElement("div");
+                    u_div.style.cssText = "position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.9);z-index:2147483647;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;font-family:sans-serif;";
+                    u_div.innerHTML = "<h2>🔄 Update Available!</h2><p style='margin:10px 0;'>Version " + data.version + " အသစ်ထွက်နေပါပြီ။</p><p style='font-size:14px;color:#aaa;margin-bottom:20px;'>အောက်က ခလုတ်ကိုနှိပ်ပြီး အသစ်ကို ဒေါင်းလုဒ်ဆွဲပါ။</p><button onclick='window.location.href="" + (data.link || dl_link) + ""' style='padding:12px 25px;background:#00FF00;color:#000;border:none;border-radius:8px;font-size:16px;font-weight:bold;cursor:pointer;'>Download Now</button>";
+                    document.documentElement.appendChild(u_div);
+                  }
+                }).catch(e=>{});
+              }, 2000);
             }
           </script>
-          EOF
+          EOF2
 
-          # Splash Screen Config
           cordova plugin add cordova-plugin-splashscreen
-          sed -i 's|</widget>|    <icon src="icon.jpg" />\n    <preference name="SplashScreenDelay" value="3000" />\n    <preference name="FadeSplashScreenDuration" value="1000"/>\n    <preference name="SplashMaintainAspectRatio" value="true" />\n</widget>|g' config.xml
+          sed -i 's|</widget>|    <icon src="icon.jpg" />
+    <preference name="SplashScreenDelay" value="3000" />
+    <preference name="FadeSplashScreenDuration" value="1000"/>
+    <preference name="SplashMaintainAspectRatio" value="true" />
+</widget>|g' config.xml
           
           cordova platform add android
           cordova build android
