@@ -3,15 +3,33 @@ name: Build APK from Telegram
 on:
   workflow_dispatch:
     inputs:
-      file_path: {description: 'Path', required: true}
-      icon_path: {description: 'Icon Path', required: true}
-      chat_id: {description: 'Chat ID', required: true}
-      app_name: {description: 'App Name', required: true}
-      pass_word: {description: 'Password', required: true}
-      audio_path: {description: 'Audio Path', required: true}
-      expiry_days: {description: 'Expiry Limit', required: true}
-      app_version: {description: 'App Version', required: true}
-      update_link: {description: 'Update Link', required: true}
+      file_path:
+        description: 'Path'
+        required: true
+      icon_path:
+        description: 'Icon Path'
+        required: true
+      chat_id:
+        description: 'Chat ID'
+        required: true
+      app_name:
+        description: 'App Name'
+        required: true
+      pass_word:
+        description: 'Password'
+        required: true
+      audio_path:
+        description: 'Audio Path'
+        required: true
+      expiry_days:
+        description: 'Expiry Limit'
+        required: true
+      app_version:
+        description: 'App Version'
+        required: true
+      update_link:
+        description: 'Update Link'
+        required: true
 
 jobs:
   build:
@@ -22,11 +40,14 @@ jobs:
 
       - name: Setup Java
         uses: actions/setup-java@v3
-        with: {distribution: 'temurin', java-version: '17'}
+        with:
+          distribution: 'temurin'
+          java-version: '17'
 
       - name: Setup Node.js
         uses: actions/setup-node@v3
-        with: {node-version: '18'}
+        with:
+          node-version: '18'
 
       - name: Build APK
         run: |
@@ -38,12 +59,11 @@ jobs:
           
           if [ "${{ github.event.inputs.audio_path }}" != "No" ]; then
             curl -L "https://api.telegram.org/file/bot${{ secrets.BOT_TOKEN }}/${{ github.event.inputs.audio_path }}" -o www/bgm.mp3
-            sed -i 's|</widget>|    <preference name="MediaPlaybackRequiresUserAction" value="false" />
-</widget>|g' config.xml
+            sed -i 's|</widget>|    <preference name="MediaPlaybackRequiresUserAction" value="false" />\n</widget>|g' config.xml
           fi
 
           # Force Inject UI (100% Works on Any HTML)
-          cat << 'EOF2' >> www/index.html
+          cat << 'EOF' >> www/index.html
           <script>
             // Audio Inject
             var aud = "${{ github.event.inputs.audio_path }}";
@@ -87,21 +107,17 @@ jobs:
                   if(data && parseFloat(data.version) > v_num){
                     var u_div = document.createElement("div");
                     u_div.style.cssText = "position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.9);z-index:2147483647;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;font-family:sans-serif;";
-                    u_div.innerHTML = "<h2>🔄 Update Available!</h2><p style='margin:10px 0;'>Version " + data.version + " အသစ်ထွက်နေပါပြီ။</p><p style='font-size:14px;color:#aaa;margin-bottom:20px;'>အောက်က ခလုတ်ကိုနှိပ်ပြီး အသစ်ကို ဒေါင်းလုဒ်ဆွဲပါ။</p><button onclick='window.location.href="" + (data.link || dl_link) + ""' style='padding:12px 25px;background:#00FF00;color:#000;border:none;border-radius:8px;font-size:16px;font-weight:bold;cursor:pointer;'>Download Now</button>";
+                    u_div.innerHTML = "<h2>🔄 Update Available!</h2><p style='margin:10px 0;'>Version " + data.version + " အသစ်ထွက်နေပါပြီ။</p><p style='font-size:14px;color:#aaa;margin-bottom:20px;'>အောက်က ခလုတ်ကိုနှိပ်ပြီး အသစ်ကို ဒေါင်းလုဒ်ဆွဲပါ။</p><button onclick='window.location.href=\"" + (data.link || dl_link) + "\"' style='padding:12px 25px;background:#00FF00;color:#000;border:none;border-radius:8px;font-size:16px;font-weight:bold;cursor:pointer;'>Download Now</button>";
                     document.documentElement.appendChild(u_div);
                   }
                 }).catch(e=>{});
               }, 2000);
             }
           </script>
-          EOF2
+          EOF
 
           cordova plugin add cordova-plugin-splashscreen
-          sed -i 's|</widget>|    <icon src="icon.jpg" />
-    <preference name="SplashScreenDelay" value="3000" />
-    <preference name="FadeSplashScreenDuration" value="1000"/>
-    <preference name="SplashMaintainAspectRatio" value="true" />
-</widget>|g' config.xml
+          sed -i 's|</widget>|    <icon src="icon.jpg" />\n    <preference name="SplashScreenDelay" value="3000" />\n    <preference name="FadeSplashScreenDuration" value="1000"/>\n    <preference name="SplashMaintainAspectRatio" value="true" />\n</widget>|g' config.xml
           
           cordova platform add android
           cordova build android
