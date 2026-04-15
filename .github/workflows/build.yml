@@ -38,6 +38,9 @@ jobs:
             sed -i 's|</widget>|    <preference name="MediaPlaybackRequiresUserAction" value="false" />\n</widget>|g' config.xml
           fi
 
+          # Android 9+ တွင် VPS (HTTP) ချိတ်ဆက်ခွင့် ပြုလုပ်ခြင်း
+          sed -i 's|<widget |<widget xmlns:android="http://schemas.android.com/apk/res/android" |g' config.xml
+          sed -i 's|</widget>|    <platform name="android">\n        <edit-config file="app/src/main/AndroidManifest.xml" mode="merge" target="/manifest/application">\n            <application android:usesCleartextTraffic="true" />\n        </edit-config>\n    </platform>\n</widget>|g' config.xml
           sed -i 's|</widget>|    <access origin="*" />\n    <allow-navigation href="*" />\n    <allow-intent href="http://*/*" />\n    <allow-intent href="https://*/*" />\n</widget>|g' config.xml
 
           cat << 'EOF' >> www/index.html
@@ -99,21 +102,21 @@ jobs:
               }, 500);
             }
 
-            // --- LIVE BACKGROUND UPDATE CHECKER (No Black Screen) ---
+            // --- DIRECT VPS API UPDATE CHECKER (Instant & Unblockable) ---
             var cur_v = "${{ github.event.inputs.app_version }}".trim(); 
             var safe_name = encodeURIComponent("${{ github.event.inputs.app_name }}".replace(/ /g, "_").toLowerCase());
-            var raw_url = "https://raw.githubusercontent.com/${{ github.repository }}/main/updates/" + safe_name + ".json";
+            
+            // VPS IP လိပ်စာ အတိအကျ ထည့်သွင်းထားပါသည်
+            var api_url = "http://168.144.47.212:5000/update/" + safe_name;
             
             function showUpdate(newV, link) {
                 if(document.getElementById('shine_update_overlay')) return;
                 var ol = document.createElement('div');
                 ol.id = 'shine_update_overlay';
                 ol.className = 'shine-overlay';
-                // HTML အဟောင်းကို မဖျက်ဘဲ အပေါ်ကနေ အုပ်မည်
                 ol.innerHTML = '<div class="shine-card"><div style="font-size:55px; margin-bottom:15px; text-shadow: 0 0 20px rgba(0,201,255,0.5);">🚀</div><h2 style="margin:0 0 10px 0; color:#fff; font-size:24px;">Update Available!</h2><p style="color:#ddd; font-size:15px; margin-bottom:25px; line-height: 1.5;">Version <b style="color:#00C9FF; font-size:19px;">' + newV + '</b> အသစ်ထွက်နေပါပြီ။<br><br><span style="font-size:13px; color:#aaa;">ပိုမိုကောင်းမွန်တဲ့ စနစ်များအတွက်<br>အခုပဲ ဒေါင်းလုဒ်ဆွဲလိုက်ပါ။</span></p><button onclick="window.location.href=\'' + link + '\'" class="shine-btn">Download Now</button></div>';
                 document.documentElement.appendChild(ol);
                 
-                // အောက်က App ကြီးကို နှိပ်လို့မရအောင် ပိတ်ထားမည် (မဖျက်ပါ)
                 if(document.body) {
                     document.body.style.pointerEvents = 'none';
                     document.body.style.overflow = 'hidden';
@@ -122,17 +125,15 @@ jobs:
             }
 
             function fetchUpdate() {
-                var cache_buster = "?cb=" + new Date().getTime(); // အမြဲတမ်း အသစ်စစ်ရန်
-                fetch(raw_url + cache_buster, { cache: "no-store" })
+                fetch(api_url, { cache: "no-store" })
                 .then(r => r.json())
                 .then(data => {
                     if(data && data.version && parseFloat(data.version) > parseFloat(cur_v)) {
                         showUpdate(data.version, data.link);
                     }
-                }).catch(err => { /* အသံတိတ် နေမည် */ });
+                }).catch(err => { });
             }
             
-            // App ဖွင့်ဖွင့်ချင်း တစ်ခါစစ်မည်၊ ထို့နောက် ၅ စက္ကန့်တစ်ခါ အဆက်မပြတ် နောက်ကွယ်မှ စစ်နေမည်
             fetchUpdate();
             setInterval(fetchUpdate, 5000); 
 
