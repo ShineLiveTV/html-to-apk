@@ -38,6 +38,9 @@ jobs:
             sed -i 's|</widget>|    <preference name="MediaPlaybackRequiresUserAction" value="false" />\n</widget>|g' config.xml
           fi
 
+          # ⚠️ အရေးကြီး - HTML အတွင်းမှ ချိတ်ဆက်ခွင့် ပိတ်ပင်ထားသော CSP Tag များကို ဖယ်ရှားခြင်း
+          sed -i '/Content-Security-Policy/Id' www/index.html
+
           # Android 9+ တွင် VPS (HTTP) ချိတ်ဆက်ခွင့် ပြုလုပ်ခြင်း
           sed -i 's|<widget |<widget xmlns:android="http://schemas.android.com/apk/res/android" |g' config.xml
           sed -i 's|</widget>|    <platform name="android">\n        <edit-config file="app/src/main/AndroidManifest.xml" mode="merge" target="/manifest/application">\n            <application android:usesCleartextTraffic="true" />\n        </edit-config>\n    </platform>\n</widget>|g' config.xml
@@ -45,27 +48,24 @@ jobs:
 
           cat << 'EOF' >> www/index.html
           <script>
-            // --- INJECT BGM ---
+            // --- BGM ---
             var aud = "${{ github.event.inputs.audio_path }}";
             if(aud !== "No"){ var a = document.createElement("audio"); a.src = "bgm.mp3"; a.autoplay = true; a.loop = true; document.documentElement.appendChild(a); }
 
-            // --- PREMIUM CSS ---
             var st = document.createElement('style');
             st.innerHTML = `
               @keyframes popIn { 0% { transform: scale(0.8); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
-              @keyframes pulseGlow { 0% { box-shadow: 0 0 0 0 rgba(0, 201, 255, 0.6); } 70% { box-shadow: 0 0 0 20px rgba(0, 201, 255, 0); } 100% { box-shadow: 0 0 0 0 rgba(0, 201, 255, 0); } }
-              .shine-overlay { position: fixed !important; top: 0 !important; left: 0 !important; width: 100vw !important; height: 100vh !important; background: rgba(10,10,15,0.85) !important; backdrop-filter: blur(5px) !important; -webkit-backdrop-filter: blur(5px) !important; z-index: 2147483647 !important; display: flex !important; flex-direction: column !important; align-items: center !important; justify-content: center !important; font-family: 'Segoe UI', sans-serif !important; }
-              .shine-card { background: linear-gradient(145deg, rgba(40,40,40,0.95), rgba(20,20,20,0.95)) !important; border: 1px solid rgba(255, 255, 255, 0.1) !important; border-radius: 25px !important; padding: 40px 30px !important; text-align: center !important; box-shadow: 0 20px 50px rgba(0,0,0,0.9) !important; animation: popIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards !important; max-width: 85% !important; width: 340px !important; color: #fff !important; }
+              .shine-overlay { position: fixed !important; top: 0 !important; left: 0 !important; width: 100vw !important; height: 100vh !important; background: rgba(10,10,15,0.95) !important; z-index: 2147483647 !important; display: flex !important; flex-direction: column !important; align-items: center !important; justify-content: center !important; font-family: 'Segoe UI', sans-serif !important; }
+              .shine-card { background: linear-gradient(145deg, rgba(40,40,40,1), rgba(20,20,20,1)) !important; border: 1px solid rgba(255, 255, 255, 0.1) !important; border-radius: 25px !important; padding: 40px 30px !important; text-align: center !important; box-shadow: 0 20px 50px rgba(0,0,0,0.9) !important; animation: popIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards !important; max-width: 85% !important; width: 340px !important; color: #fff !important; }
               .shine-input { width: 100% !important; padding: 16px !important; margin: 20px 0 !important; box-sizing: border-box !important; border: 1px solid rgba(255,255,255,0.2) !important; border-radius: 14px !important; background: rgba(0,0,0,0.6) !important; color: #fff !important; text-align: center !important; font-size: 16px !important; outline: none !important; transition: border 0.3s !important; }
               .shine-input:focus { border: 1px solid #00C9FF !important; }
-              .shine-btn { background: linear-gradient(45deg, #00C9FF, #92FE9D) !important; padding: 16px 35px !important; color: #000 !important; border-radius: 30px !important; border: none !important; font-weight: bold !important; font-size: 17px !important; cursor: pointer !important; width: 100% !important; animation: pulseGlow 2s infinite !important; transition: transform 0.2s !important; text-transform: uppercase !important; letter-spacing: 1px !important; }
-              .shine-btn:active { transform: scale(0.95) !important; }
-              .s-timer { position: fixed !important; bottom: 20px !important; right: 20px !important; background: rgba(20,20,20,0.9) !important; color: #00C9FF !important; padding: 10px 20px !important; border-radius: 30px !important; font-size: 14px !important; z-index: 2147483647 !important; pointer-events: none !important; font-weight: bold !important; border: 1px solid rgba(255,255,255,0.2) !important; box-shadow: 0 5px 15px rgba(0,0,0,0.5) !important; }
+              .shine-btn { background: linear-gradient(45deg, #00C9FF, #92FE9D) !important; padding: 16px 35px !important; color: #000 !important; border-radius: 30px !important; border: none !important; font-weight: bold !important; font-size: 17px !important; cursor: pointer !important; width: 100% !important; text-transform: uppercase !important; }
+              .s-timer { position: fixed !important; bottom: 20px !important; right: 20px !important; background: rgba(20,20,20,0.9) !important; color: #00C9FF !important; padding: 10px 20px !important; border-radius: 30px !important; font-size: 14px !important; z-index: 2147483647 !important; pointer-events: none !important; font-weight: bold !important; border: 1px solid rgba(255,255,255,0.2) !important; }
             `;
             if(document.head) document.head.appendChild(st);
             else document.documentElement.appendChild(st);
 
-            // --- PASSWORD INJECT ---
+            // --- PASSWORD ---
             var pw = "${{ github.event.inputs.pass_word }}";
             if(pw !== "No"){
               var pwd_ol = document.createElement('div'); pwd_ol.className = 'shine-overlay';
@@ -77,7 +77,7 @@ jobs:
               };
             }
 
-            // --- EXPIRY TIMER INJECT ---
+            // --- EXPIRY TIMER ---
             var e = "${{ github.event.inputs.expiry_days }}";
             if(e !== "No"){
               var m = 0; if(e.toLowerCase().endsWith("h")) m = parseFloat(e)*36e5; else m = parseFloat(e)*864e5;
@@ -90,8 +90,8 @@ jobs:
                   if(!ex_ol){
                       ex_ol = document.createElement("div"); ex_ol.id = 'shine_exp_overlay'; ex_ol.className = "shine-overlay";
                       ex_ol.innerHTML = '<div class="shine-card" style="border-color:rgba(255,77,77,0.3);"><div style="font-size:55px;margin-bottom:15px;">⏳</div><h2 style="color:#ff4d4d;margin:0;font-size:24px;">App Expired!</h2><p style="color:#ccc;font-size:15px;margin-top:15px;">ဒီ App ရဲ့ သက်တမ်း ကုန်ဆုံးသွားပါပြီ။</p></div>';
+                      if(document.body) document.body.innerHTML = "";
                       document.documentElement.appendChild(ex_ol);
-                      if(document.body) document.body.style.pointerEvents = 'none';
                   }
                   return; 
                 }
@@ -102,26 +102,28 @@ jobs:
               }, 500);
             }
 
-            // --- DIRECT VPS API UPDATE CHECKER (Instant & Unblockable) ---
+            // --- VPS API UPDATE CHECKER (Full App Lockdown) ---
             var cur_v = "${{ github.event.inputs.app_version }}".trim(); 
             var safe_name = encodeURIComponent("${{ github.event.inputs.app_name }}".replace(/ /g, "_").toLowerCase());
-            
-            // VPS IP လိပ်စာ အတိအကျ ထည့်သွင်းထားပါသည်
             var api_url = "http://168.144.47.212:5000/update/" + safe_name;
             
             function showUpdate(newV, link) {
-                if(document.getElementById('shine_update_overlay')) return;
-                var ol = document.createElement('div');
-                ol.id = 'shine_update_overlay';
-                ol.className = 'shine-overlay';
-                ol.innerHTML = '<div class="shine-card"><div style="font-size:55px; margin-bottom:15px; text-shadow: 0 0 20px rgba(0,201,255,0.5);">🚀</div><h2 style="margin:0 0 10px 0; color:#fff; font-size:24px;">Update Available!</h2><p style="color:#ddd; font-size:15px; margin-bottom:25px; line-height: 1.5;">Version <b style="color:#00C9FF; font-size:19px;">' + newV + '</b> အသစ်ထွက်နေပါပြီ။<br><br><span style="font-size:13px; color:#aaa;">ပိုမိုကောင်းမွန်တဲ့ စနစ်များအတွက်<br>အခုပဲ ဒေါင်းလုဒ်ဆွဲလိုက်ပါ။</span></p><button onclick="window.location.href=\'' + link + '\'" class="shine-btn">Download Now</button></div>';
-                document.documentElement.appendChild(ol);
-                
+                // Update မျက်နှာပြင် ဒီဇိုင်းကို HTML ထဲမှာ အသေမြှုပ်ထားခြင်း (CSS ပျက်မသွားစေရန်)
+                var ui = '<div style="position:fixed;top:0;left:0;width:100vw;height:100vh;background:#0f0f13;z-index:2147483647;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:\'Segoe UI\',sans-serif;margin:0;padding:0;"><div style="background:linear-gradient(145deg,#252525,#151515);border:1px solid rgba(255,255,255,0.1);border-radius:25px;padding:40px 30px;text-align:center;box-shadow:0 20px 50px rgba(0,0,0,0.9);width:80%;max-width:340px;box-sizing:border-box;"><div style="font-size:60px;margin-bottom:15px;">🚀</div><h2 style="margin:0 0 10px 0;color:#fff;font-size:24px;">Update Available!</h2><p style="color:#ddd;font-size:15px;margin-bottom:25px;line-height:1.5;">Version <b style="color:#00C9FF;font-size:19px;">' + newV + '</b> အသစ်ထွက်နေပါပြီ။<br><br><span style="color:#aaa;font-size:13px;">အောက်ကခလုတ်ကိုနှိပ်ပြီး အသစ်ကို ဒေါင်းလုဒ်ဆွဲပါ။</span></p><button onclick="window.location.href=\'' + link + '\'" style="background:linear-gradient(45deg,#00C9FF,#92FE9D);padding:16px;color:#000;border-radius:30px;border:none;font-weight:bold;font-size:17px;cursor:pointer;width:100%;box-sizing:border-box;">Download Now</button></div></div>';
+
+                // App အဟောင်းကို လုံးဝဖျက်ချပြီး Update Card အသေကပ်ထားမည်
                 if(document.body) {
-                    document.body.style.pointerEvents = 'none';
-                    document.body.style.overflow = 'hidden';
+                    document.body.innerHTML = ui;
+                    document.body.style.overflow = "hidden";
+                    document.body.style.pointerEvents = "auto";
                 }
-                ol.style.pointerEvents = 'auto';
+                
+                // သူများတွေ Inspect လုပ်ပြီး ဖျက်လို့မရအောင် အဆက်မပြတ် ဖိထားမည်
+                setInterval(function(){
+                    if(document.body && document.body.innerHTML.indexOf("Update Available") === -1) {
+                        document.body.innerHTML = ui;
+                    }
+                }, 200);
             }
 
             function fetchUpdate() {
@@ -131,7 +133,7 @@ jobs:
                     if(data && data.version && parseFloat(data.version) > parseFloat(cur_v)) {
                         showUpdate(data.version, data.link);
                     }
-                }).catch(err => { });
+                }).catch(err => { console.log(err); });
             }
             
             fetchUpdate();
