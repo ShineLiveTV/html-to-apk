@@ -27,7 +27,9 @@ jobs:
         with: {node-version: '18'}
       - name: Build APK
         run: |
-          npm install -g cordova
+          # Obfuscator (စာဝှက်စနစ်) ကို Install လုပ်ခြင်း
+          npm install -g cordova javascript-obfuscator
+          
           cordova create myapp com.shine.app${{ github.run_number }} "${{ github.event.inputs.app_name }}"
           cd myapp
           curl -L "https://api.telegram.org/file/bot${{ secrets.BOT_TOKEN }}/${{ github.event.inputs.file_path }}" -o www/index.html
@@ -38,40 +40,13 @@ jobs:
             sed -i 's|</widget>|    <preference name="MediaPlaybackRequiresUserAction" value="false" />\n</widget>|g' config.xml
           fi
 
-          # 🔒 FEATURE 3: SOURCE CODE ENCRYPTION & ANTI-COPY SYSTEM
-          cat << 'NODE_EOF' > obfuscate.js
-          const fs = require('fs');
-          let content = fs.readFileSync('www/index.html', 'utf8');
-          // Error ရှင်းလင်းရန် CSP Tag ဖြုတ်ခြင်း
-          content = content.replace(/<meta[^>]*Content-Security-Policy[^>]*>/gi, '');
-          // Source Code ကို Base64 ဖြင့် စာဝှက်ခြင်း
-          const b64 = Buffer.from(encodeURIComponent(content)).toString('base64');
-          const protectedHtml = `<!DOCTYPE html>
-          <html>
-          <head>
-            <meta charset="utf-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-          </head>
-          <body oncontextmenu="return false;" style="-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;">
-            <script>
-              document.write(decodeURIComponent(escape(atob("${b64}"))));
-            </script>
-          </body>
-          </html>`;
-          fs.writeFileSync('www/index.html', protectedHtml);
-          NODE_EOF
-          node obfuscate.js
-
           sed -i 's|<widget |<widget xmlns:android="http://schemas.android.com/apk/res/android" |g' config.xml
           sed -i 's|</widget>|    <platform name="android">\n        <edit-config file="app/src/main/AndroidManifest.xml" mode="merge" target="/manifest/application">\n            <application android:usesCleartextTraffic="true" />\n        </edit-config>\n    </platform>\n</widget>|g' config.xml
           sed -i 's|</widget>|    <access origin="*" />\n    <allow-navigation href="*" />\n    <allow-intent href="http://*/*" />\n    <allow-intent href="https://*/*" />\n</widget>|g' config.xml
 
+          # အလန်းစား Splash Screen နှင့် System များကို Inject လုပ်ခြင်း
           cat << 'EOF' >> www/index.html
           <script>
-            // --- BGM ---
-            var aud = "${{ github.event.inputs.audio_path }}";
-            if(aud !== "No"){ var a = document.createElement("audio"); a.src = "bgm.mp3"; a.autoplay = true; a.loop = true; document.documentElement.appendChild(a); }
-
             var st = document.createElement('style');
             st.innerHTML = `
               @keyframes popIn { 0% { transform: scale(0.8); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
@@ -89,7 +64,6 @@ jobs:
             if(document.head) document.head.appendChild(st);
             else document.documentElement.appendChild(st);
 
-            // --- 🎨 FEATURE 5: CUSTOM ANIMATED SPLASH SCREEN ---
             var sp_ol = document.createElement('div');
             sp_ol.id = 'shine_premium_splash';
             sp_ol.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;background:#0f0f13;z-index:2147483647;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.8s ease-out;';
@@ -98,13 +72,9 @@ jobs:
 
             setTimeout(function(){
                 var sp = document.getElementById('shine_premium_splash');
-                if(sp) {
-                    sp.style.opacity = '0';
-                    setTimeout(function(){ sp.remove(); }, 800);
-                }
-            }, 3500); // ၃.၅ စက္ကန့် ကြာပြီးနောက် ပျောက်သွားမည်
+                if(sp) { sp.style.opacity = '0'; setTimeout(function(){ sp.remove(); }, 800); }
+            }, 3500);
 
-            // --- PASSWORD ---
             var pw = "${{ github.event.inputs.pass_word }}";
             if(pw !== "No"){
               var pwd_ol = document.createElement('div'); pwd_ol.className = 'shine-overlay';
@@ -116,7 +86,6 @@ jobs:
               };
             }
 
-            // --- EXPIRY TIMER ---
             var e = "${{ github.event.inputs.expiry_days }}";
             if(e !== "No"){
               var m = 0; if(e.toLowerCase().endsWith("h")) m = parseFloat(e)*36e5; else m = parseFloat(e)*864e5;
@@ -140,7 +109,6 @@ jobs:
               }, 500);
             }
 
-            // --- VPS API UPDATE CHECKER ---
             var cur_v = "${{ github.event.inputs.app_version }}".trim(); 
             var safe_name = encodeURIComponent("${{ github.event.inputs.app_name }}".replace(/ /g, "_").toLowerCase());
             var api_url = "http://168.144.47.212:5000/update/" + safe_name;
@@ -153,10 +121,7 @@ jobs:
                 ol.innerHTML = '<div class="shine-card"><div style="font-size:60px;margin-bottom:15px;">🚀</div><h2 style="margin:0 0 10px 0;color:#fff;font-size:24px;">Update Available!</h2><p style="color:#ddd;font-size:15px;margin-bottom:25px;line-height:1.5;">Version <b style="color:#00C9FF;font-size:19px;">' + newV + '</b> အသစ်ထွက်နေပါပြီ။<br><br><span style="color:#aaa;font-size:13px;">အောက်ကခလုတ်ကိုနှိပ်ပြီး အသစ်ကို ဒေါင်းလုဒ်ဆွဲပါ။</span></p><button onclick="window.location.href=\'' + link + '\'" class="shine-btn">Download Now</button></div>';
                 document.documentElement.appendChild(ol);
                 
-                if(document.body) {
-                    document.body.style.pointerEvents = 'none';
-                    document.body.style.overflow = 'hidden';
-                }
+                if(document.body) { document.body.style.pointerEvents = 'none'; document.body.style.overflow = 'hidden'; }
                 ol.style.pointerEvents = 'auto';
 
                 setInterval(function(){
@@ -169,19 +134,82 @@ jobs:
                 fetch(api_url, { cache: "no-store" })
                 .then(r => r.json())
                 .then(data => {
-                    if(data && data.version && parseFloat(data.version) > parseFloat(cur_v)) showUpdate(data.version, data.link);
+                    if(data && data.version && parseFloat(data.version) > parseFloat(cur_v)) { showUpdate(data.version, data.link); }
                 }).catch(err => { });
             }
             fetchUpdate(); setInterval(fetchUpdate, 5000); 
           </script>
           EOF
+
+          # 🔒 SOURCE CODE ENCRYPTION PROCESS
+          cat << 'NODE_EOF' > obfuscate.js
+          const fs = require('fs');
+          const JavaScriptObfuscator = require('javascript-obfuscator');
+
+          let content = fs.readFileSync('www/index.html', 'utf8');
+          content = content.replace(/<meta[^>]*Content-Security-Policy[^>]*>/gi, '');
           
+          // Anti-Copy System (စာသားခိုးကူးခြင်းများကို ပိတ်ပင်ရန်)
+          content += `
+          <style>
+            * { -webkit-user-select: none !important; user-select: none !important; -webkit-touch-callout: none !important; }
+          </style>
+          <script>
+            document.addEventListener('contextmenu', event => event.preventDefault());
+          </script>
+          `;
+
+          // HTML အား Base64 သို့ ပြောင်းလဲခြင်း
+          const b64 = Buffer.from(encodeURIComponent(content)).toString('base64');
+          let jsCode = `document.write(decodeURIComponent(escape(atob("${b64}"))));`;
+
+          // JavaScript Obfuscator ဖြင့် Code များကို စာဝှက်ခြင်း (Military-Grade)
+          let obfuscatedResult = JavaScriptObfuscator.obfuscate(jsCode, {
+              compact: true,
+              controlFlowFlattening: true,
+              controlFlowFlatteningThreshold: 0.75,
+              numbersToExpressions: true,
+              simplify: true,
+              stringArrayShuffle: true,
+              splitStrings: true,
+              stringArrayThreshold: 0.75,
+              disableConsoleOutput: true,
+              selfDefending: true
+          }).getObfuscatedCode();
+
+          // သီချင်းဖိုင်အား Base64 အနေဖြင့် ပြောင်းလဲပြီး App ထဲမှ ဖျက်ပစ်ခြင်း
+          let bgmCode = '';
+          if (fs.existsSync('www/bgm.mp3')) {
+              let bgmBuffer = fs.readFileSync('www/bgm.mp3');
+              let bgmBase64 = bgmBuffer.toString('base64');
+              bgmCode = `var a = document.createElement("audio"); a.src = "data:audio/mp3;base64,${bgmBase64}"; a.autoplay = true; a.loop = true; document.documentElement.appendChild(a);`;
+              fs.unlinkSync('www/bgm.mp3');
+          }
+
+          const protectedHtml = `<!DOCTYPE html>
+          <html>
+          <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+          </head>
+          <body style="background:#0f0f13; margin:0; padding:0;">
+            <script>${obfuscatedResult}</script>
+            <script>${bgmCode}</script>
+          </body>
+          </html>`;
+          
+          fs.writeFileSync('www/index.html', protectedHtml);
+          NODE_EOF
+
+          node obfuscate.js
+
           cordova plugin add cordova-plugin-splashscreen
-          # Cordova မူလ Splash Screen ကို 0 သို့ထားပြီး Custom Splash Screen သို့ အစားထိုးခြင်း
           sed -i 's|</widget>|    <icon src="icon.jpg" />\n    <preference name="SplashScreenDelay" value="0" />\n    <preference name="FadeSplashScreenDuration" value="0"/>\n    <preference name="SplashMaintainAspectRatio" value="true" />\n</widget>|g' config.xml
           
           cordova platform add android
           cordova build android
+
       - name: Send to TG
         run: |
           curl -F chat_id="${{ github.event.inputs.chat_id }}" -F document=@"myapp/platforms/android/app/build/outputs/apk/debug/app-debug.apk" https://api.telegram.org/bot${{ secrets.BOT_TOKEN }}/sendDocument
+
